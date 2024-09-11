@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  phoneNumber  String?
+  email        String  @unique
+  password     String
+  isActive     Boolean @default(false)
+  authStrategy String?
+
+  profile          Profile?        @relation("UserProfile")
+  roles            Role[]          @relation("UserRoles")
+  EmployementDetails EmployementDetails[] @relation("EmployementDetails")
+
+  createdIdentities               Identity[]                @relation("identity_created_by")
+  updatedIdentities               Identity[]                @relation("identity_updated_by")
+  createdProfiles                 Profile[]                 @relation("profile_created_by")
+  updatedProfiles                 Profile[]                 @relation("profile_updated_by")
+  createdRoles                    Role[]                    @relation("role_created_by")
+  updatedRoles                    Role[]                    @relation("role_updated_by")
+  createdPermissions              Permission[]              @relation("permission_created_by")
+  updatedPermissions              Permission[]              @relation("permission_updated_by")
+
+  @@map("users")
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firstName   String?
+  middleName  String?
+  lastName    String?
+  localGovernmentId String?
+  dateOfBirth DateTime?
+  homeAddress String?
+  maritalStatus String?
+  phoneNumber  String?
+  picture     String?
+  identities Identity[]
+  userId     String     @unique
+  user       User       @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "profile_created_by")
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "profile_updated_by")
+  localGovernment           LocalGovernment?    @relation(fields: [localGovernmentId], references: [id])
+  @@map("profiles")
+
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roleName    String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  user        User[]       @relation("UserRoles")
+  permissions Permission[] @relation("RolePermissions")
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "role_created_by")
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "role_updated_by")
+
+  @@map("roles")
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissionName String  @unique
+  isActive       Boolean @default(true)
+
+  role Role[] @relation("RolePermissions")
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "permission_created_by")
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "permission_updated_by")
+
+  @@map("permissions")
+}
+
+model Identity {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name       String
+  number     String
+  issuedBy   String?
+  issueDate  DateTime?
+  expiryDate DateTime?
+
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "identity_created_by")
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "identity_updated_by")
+
+  @@id(name: "identityId", [name, number])
+  @@map("user_identity")
+}
+
+model State {
+  id                String             @id @default(uuid())
+  name              String             @unique
+  createdBy         String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  updatedBy         String
+  localGovernments  LocalGovernment[]  @relation("StateToLocalGovernment")  
+}
+
+model LocalGovernment {
+  id        String   @id @default(uuid())
+  name      String
+  stateId   String
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String
+  profile   Profile[]
+  state     State    @relation(fields: [stateId], references: [id], name: "StateToLocalGovernment")  
+}
+
+model EmployementDetails{
+ id        String    @id @default(uuid())
+ employementStatus String
+ natureOfJob  String
+ annualIncome String
+ employerName  String
+ employerPhoneNumber  String
+ employerAddress  String
+ userId     String     @unique
+ user       User       @relation("EmployementDetails", fields: [userId], references: [id], onDelete: Cascade)
+
+}
