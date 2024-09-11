@@ -36,8 +36,9 @@ model User {
   updatedRoles                    Role[]                    @relation("role_updated_by")
   createdPermissions              Permission[]              @relation("permission_created_by")
   updatedPermissions              Permission[]              @relation("permission_updated_by")
-
+  Orphan                          Orphan[]                  @relation("OrphanProfile")
   @@map("users")
+
 }
 
 model Profile {
@@ -160,4 +161,11 @@ model EmployementDetails{
  userId     String     @unique
  user       User       @relation("EmployementDetails", fields: [userId], references: [id], onDelete: Cascade)
 
+}
+
+model Orphan{
+  id        String    @id @default(uuid())
+affidavitOfGuardianship String
+  userId     String     @unique
+  user       User       @relation("OrphanProfile", fields: [userId], references: [id], onDelete: Cascade)
 }
