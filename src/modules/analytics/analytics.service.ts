@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAnalyticsDto } from './dto/create-analytics.dto';
 import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class AnalyticsService {
+  constructor(
+    private prisma: PrismaService,){}
   create(createAnalyticsDto: CreateAnalyticsDto) {
     return 'This action adds a new analytics';
   }
@@ -23,4 +26,6 @@ export class AnalyticsService {
   remove(id: number) {
     return `This action removes a #${id} analytics`;
   }
+
+  
 }

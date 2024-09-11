@@ -34,4 +34,5 @@ export class AnalyticsController {
   remove(@Param('id') id: string) {
     return this.analyticsService.remove(+id);
   }
+
 }
