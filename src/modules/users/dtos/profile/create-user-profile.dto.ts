@@ -121,6 +121,21 @@ export class CreateProfileDto {
   @IsNotEmpty()
   employerAddress: string;
   
+  @ApiProperty({
+    description: 'ID Name ',
+    example: 'NIN',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({
+    description: 'ID Number ',
+    example: '43212302293',
+  })
+  @IsString()
+  @IsNotEmpty()
+  number: string;
 }
 
 

@@ -11,6 +11,9 @@ import { AppService } from './app.service';
 import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import { HttpModule } from '@nestjs/axios';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { OrphanModule } from './modules/orphan/orphan.module';
+import { GuardianModule } from './modules/guardian/guardian.module';
+import { SponsorModule } from './modules/sponsor/sponsor.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -45,6 +48,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     UsersModule,
     AuthModule,
     AnalyticsModule,
+    OrphanModule,
+    GuardianModule,
+    SponsorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

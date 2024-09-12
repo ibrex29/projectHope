@@ -1,21 +1,11 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Message` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "Message";
-
--- DropTable
-DROP TABLE "User";
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "isAchieved" BOOLEAN NOT NULL DEFAULT false,
     "phoneNumber" TEXT,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
@@ -33,7 +23,7 @@ CREATE TABLE "profiles" (
     "firstName" TEXT,
     "middleName" TEXT,
     "lastName" TEXT,
-    "localGovernmentId" TEXT NOT NULL,
+    "localGovernmentId" TEXT,
     "dateOfBirth" TIMESTAMP(3),
     "homeAddress" TEXT,
     "maritalStatus" TEXT,
@@ -93,10 +83,10 @@ CREATE TABLE "user_identity" (
 CREATE TABLE "State" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "createdBy" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "updatedBy" TEXT NOT NULL,
+    "createdByUserId" TEXT,
+    "updatedByUserId" TEXT,
 
     CONSTRAINT "State_pkey" PRIMARY KEY ("id")
 );
@@ -106,10 +96,10 @@ CREATE TABLE "LocalGovernment" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "stateId" TEXT NOT NULL,
-    "createdBy" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "updatedBy" TEXT NOT NULL,
+    "createdByUserId" TEXT,
+    "updatedByUserId" TEXT,
 
     CONSTRAINT "LocalGovernment_pkey" PRIMARY KEY ("id")
 );
@@ -117,7 +107,9 @@ CREATE TABLE "LocalGovernment" (
 -- CreateTable
 CREATE TABLE "EmployementDetails" (
     "id" TEXT NOT NULL,
-    "status" BOOLEAN NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "employementStatus" TEXT NOT NULL,
     "natureOfJob" TEXT NOT NULL,
     "annualIncome" TEXT NOT NULL,
     "employerName" TEXT NOT NULL,
@@ -126,6 +118,88 @@ CREATE TABLE "EmployementDetails" (
     "userId" TEXT NOT NULL,
 
     CONSTRAINT "EmployementDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "orphans" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "trackingNumber" TEXT NOT NULL,
+    "picture" TEXT,
+    "status" BOOLEAN NOT NULL DEFAULT true,
+    "schoolStatus" BOOLEAN,
+    "schoolAddress" TEXT,
+    "schoolContactPerson" TEXT,
+    "schoolContactPhone" TEXT,
+    "affidavitOfGuardianship" TEXT NOT NULL,
+    "createdByUserId" TEXT,
+    "userId" TEXT NOT NULL,
+    "updatedByUserId" TEXT,
+
+    CONSTRAINT "orphans_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "requests" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" BOOLEAN NOT NULL DEFAULT false,
+    "need" TEXT[],
+    "description" TEXT NOT NULL,
+    "amountNeeded" TEXT NOT NULL,
+    "amountRecieved" TEXT NOT NULL,
+    "orphanId" TEXT NOT NULL,
+
+    CONSTRAINT "requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Need" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "type" TEXT NOT NULL,
+    "description" TEXT,
+    "schoolStatus" BOOLEAN,
+    "schoolAddress" TEXT,
+    "schoolContactPerson" TEXT,
+    "schoolContactPhone" TEXT,
+    "hospitalName" TEXT,
+    "cardNumber" TEXT,
+    "diseaseType" TEXT,
+    "feedingProgram" TEXT,
+    "mealFrequency" TEXT,
+    "clothingSize" TEXT,
+    "seasonalNeeds" BOOLEAN,
+    "supportiveDocuments" TEXT,
+
+    CONSTRAINT "Need_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Donation" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "requestId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "Donation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "bank_details" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "accountNumber" TEXT NOT NULL,
+    "accountName" TEXT NOT NULL,
+    "bankName" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "bank_details_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -159,6 +233,9 @@ CREATE UNIQUE INDEX "State_name_key" ON "State"("name");
 CREATE UNIQUE INDEX "EmployementDetails_userId_key" ON "EmployementDetails"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "orphans_userId_key" ON "orphans"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_UserRoles_AB_unique" ON "_UserRoles"("A", "B");
 
 -- CreateIndex
@@ -180,7 +257,7 @@ ALTER TABLE "profiles" ADD CONSTRAINT "profiles_createdByUserId_fkey" FOREIGN KE
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "profiles" ADD CONSTRAINT "profiles_localGovernmentId_fkey" FOREIGN KEY ("localGovernmentId") REFERENCES "LocalGovernment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_localGovernmentId_fkey" FOREIGN KEY ("localGovernmentId") REFERENCES "LocalGovernment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "roles" ADD CONSTRAINT "roles_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -204,10 +281,43 @@ ALTER TABLE "user_identity" ADD CONSTRAINT "user_identity_createdByUserId_fkey" 
 ALTER TABLE "user_identity" ADD CONSTRAINT "user_identity_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "State" ADD CONSTRAINT "State_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "State" ADD CONSTRAINT "State_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LocalGovernment" ADD CONSTRAINT "LocalGovernment_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LocalGovernment" ADD CONSTRAINT "LocalGovernment_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "LocalGovernment" ADD CONSTRAINT "LocalGovernment_stateId_fkey" FOREIGN KEY ("stateId") REFERENCES "State"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "EmployementDetails" ADD CONSTRAINT "EmployementDetails_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "orphans" ADD CONSTRAINT "orphans_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "orphans" ADD CONSTRAINT "orphans_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "orphans" ADD CONSTRAINT "orphans_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "requests" ADD CONSTRAINT "requests_orphanId_fkey" FOREIGN KEY ("orphanId") REFERENCES "orphans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Donation" ADD CONSTRAINT "Donation_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "requests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Donation" ADD CONSTRAINT "Donation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bank_details" ADD CONSTRAINT "bank_details_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_UserRoles" ADD CONSTRAINT "_UserRoles_A_fkey" FOREIGN KEY ("A") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

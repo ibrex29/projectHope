@@ -138,8 +138,31 @@ export class UsersService {
       },
     });
   
-    return { employmentDetails, profile };
+    // Upsert identity details
+    const identity = await this.prisma.identity.upsert({
+      where: {
+        identityId: {
+          name: createProfileDto.name,
+          number: createProfileDto.number,
+        },
+      },
+      update: {
+        profile: {
+          connect: { id: profile.id },
+        },
+      },
+      create: {
+        name: createProfileDto.name,
+        number: createProfileDto.number,
+        profile: {
+          connect: { id: profile.id },
+        },
+      },
+    });
+  
+    return { employmentDetails, profile, identity };
   }
+  
   
   
 
