@@ -6,7 +6,6 @@ import { ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guard/role.guard';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UserType } from '../users/types/user.type';
-import { Role } from '@/common/constants/routes.constant';
 
 // @RolesGuard()
 @UseGuards(RolesGuard)
@@ -41,7 +40,7 @@ export class GuardianController {
   }
 
   @Post(':userId')
-  @Role(UserType.ADMIN) // Ensure only users with 'ORPHAN' role can create requests
+  // @Role(UserType.ADMIN) // Ensure only users with 'ORPHAN' role can create requests
   async createOrphanRequest(
     @Param('userId') userId: string, 
     @Body() createRequestDto: CreateRequestDto
