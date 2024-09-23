@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CreateAnalyticsDto } from './dto/create-analytics.dto';
 import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
 import { PrismaService } from 'prisma/prisma.service';
+import { Role } from 'src/common/constants/routes.constant';
+import { UserType } from '../users/types/user.type';
 
 @Injectable()
 export class AnalyticsService {
@@ -27,6 +29,42 @@ export class AnalyticsService {
     return `This action removes a #${id} analytics`;
   }
 
+  async countOrphansSponsorsAndGuardians() {
+    const [orphansCount, sponsorsCount, guardiansCount] = await Promise.all([
+      this.prisma.user.count({
+        where: {
+          roles: {
+            some: {
+              roleName: UserType.ORPHAN,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          roles: {
+            some: {
+              roleName: UserType.SPONSOR,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          roles: {
+            some: {
+              roleName: UserType.GUARDIAN,
+            },
+          },
+        },
+      }),
+    ]);
   
+    return {
+      orphansCount,
+      sponsorsCount,
+      guardiansCount,
+    };
+  }
   
 }

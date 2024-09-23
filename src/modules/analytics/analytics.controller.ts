@@ -3,8 +3,10 @@ import { AnalyticsService } from './analytics.service';
 import { CreateAnalyticsDto } from './dto/create-analytics.dto';
 import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/common/constants/routes.constant';
 
 @ApiTags('Analytics')
+@Public()
 @ApiBearerAuth()
 @Controller('analytics')
 export class AnalyticsController {
@@ -15,10 +17,11 @@ export class AnalyticsController {
     return this.analyticsService.create(createAnalyticsDto);
   }
 
-  @Get()
-  findAll() {
-    return this.analyticsService.findAll();
+  @Get("analytics")
+AllOrphans() {
+    return this.analyticsService.countOrphansSponsorsAndGuardians();
   }
+
 
   @Get(':id')
   findOne(@Param('id') id: string) {

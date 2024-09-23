@@ -42,7 +42,7 @@ model User {
   createdOrphan                   Orphan[]                  @relation("orphan_created_by")
   updatedOrphan                   Orphan[]                  @relation("orphan_updated_by")
   donations                       Donation[]                @relation("UserDonations")
-  bankDetails                     BankDetails[]             @relation(name: "UserBankDetails")
+  bankDetails                     BankDetails[]             @relation("UserBankDetails")
 
   @@map("users")
 
@@ -217,10 +217,11 @@ model Request {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   status            Boolean @default(false)
+  isApproved        Boolean @default(false)
   need              String[]
   description       String
-  amountNeeded      String
-  amountRecieved    String
+  amountNeeded      Float
+  amountRecieved    Float @default(0)
   orphanId          String
   orphan            Orphan     @relation("OrphanRequests", fields: [orphanId], references: [id])
   donations         Donation[]  @relation("RequestDonations")

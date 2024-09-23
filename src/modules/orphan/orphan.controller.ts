@@ -19,9 +19,9 @@ import { User } from '@prisma/client';
 export class OrphanController {
   constructor(private readonly orphanService: OrphanService) {}
   @Version('1')
+
   @Post("orphan")
   @ApiOperation({ summary: 'Create a new orphan account and associated profile.' })
-  
   async createOrphanAccount(
     @Body() createOrphanDto: CreateOrphanDto,
     @Request() req
