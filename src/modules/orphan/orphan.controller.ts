@@ -1,69 +1,96 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UnauthorizedException, Version, HttpException, HttpStatus, } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Request,
+  UnauthorizedException,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { OrphanService } from './orphan.service';
 import { CreateOrphanDto } from './dto/create-orphan.dto';
-import { UpdateOrphanDto } from './dto/update-orphan.dto';
-import { ApiTags,ApiOperation, ApiResponse, ApiBasicAuth, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Orphan, User } from '@prisma/client';
+import { CreateRequestDto } from './dto/create-request.dto';
+import { Request as PrismaRequest } from '@prisma/client';
+import { OrphanFilterDto } from './dto/fetch-orphan.dto';
 import { Public } from 'src/common/constants/routes.constant';
-import { User } from '@prisma/client';
-// @Public()
-@ApiTags("orphan")
+import { RequestRemovalDto } from './dto/request-removal.dto';
+import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
+import { OrphanRemovalDto } from './dto/orphan-request-removal.dto';
+
+@ApiTags('orphan')
 @ApiBearerAuth()
-@Controller('orphan')
-// @ApiResponse({
-//   status: 401,
-//   description: 'Unauthorized. User ID is required.',
-// })
-@ApiResponse({
-  status: 201,
-  description: 'The orphan has been successfully created.'})
+// @Public()
+@Controller({ path: 'orphan', version: '1' })
 export class OrphanController {
   constructor(private readonly orphanService: OrphanService) {}
-  @Version('1')
 
-  @Post("orphan")
-  @ApiOperation({ summary: 'Create a new orphan account and associated profile.' })
-  async createOrphanAccount(
-    @Body() createOrphanDto: CreateOrphanDto,
-    @Request() req
-  ) { 
-    
+  @Post()
+  async createOrphanAccount(@Body() dto: CreateOrphanDto, @Request() req) {
     const userId = req.user?.userId;
-  
-    if (!userId) {
-      throw new UnauthorizedException('User ID is required');
-    }
-  
-      return await this.orphanService.createOrphanAccount(createOrphanDto,userId);
-    } 
-@Public()
-    @Get('users-with-orphan-role')
-    @ApiResponse({ status: 200, description: 'Get users with orphan role successfully.'})
-    @ApiResponse({ status: 500, description: 'Error fetching users with orphan role.' })
-    async getUsersWithOrphanRole(): Promise<User[]> {
-      try {
-        return await this.orphanService.getOrphans();
-      } catch (error) {
-        throw new HttpException(`Error fetching users with orphan role: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
-  
+    if (!userId) throw new UnauthorizedException('User ID is required');
+    return this.orphanService.createOrphanAccount(dto, userId);
+  }
+
+  @Post(':id/accept')
+  async acceptOrphan(@Param('id') orphanId: string, @Request() req): Promise<Orphan> {
+    return this.orphanService.acceptOrphan(orphanId, req.user?.userId);
+  }
+
   @Get()
-  findAll() {
-    return this.orphanService.findAll();
+  async getAllOrphans(): Promise<User[]> {
+    return this.orphanService.getAllOrphans();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.orphanService.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  @Post('deletion-request')
+  async orphanDeletionRequest(@Body() dto: OrphanRemovalDto, @Request() req): Promise<Orphan> {
+    const userId = req.user?.userId;
+
+    // Pass the dto and userId to the orphanDeletionRequest service method
+    return this.orphanService.orphanDeletionRequest(dto, userId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrphanDto: UpdateOrphanDto) {
-    return this.orphanService.update(+id, updateOrphanDto);
+  @Post(':id/delete')
+  async deleteOrphan(@Param('id') orphanId: string, @Request() req): Promise<Orphan> {
+    const userId = req.user?.userId;
+    return this.orphanService.deleteOrphan(orphanId, userId);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orphanService.remove(+id);
+}
+  @ApiTags('Request')
+  @Controller({ path: 'request', version: '1' })
+export class RequestController {
+  constructor(private readonly orphanService: OrphanService) {}
+
+
+  @Post()
+  async createRequest(@Body() createRequestDto: CreateRequestDto, @Request() req) {
+    const userId = req.user?.userId;
+    return this.orphanService.createNeedRequest(createRequestDto,userId);
   }
+  @Public()
+  @Get('all-request')
+  async getAllRequests() {
+    return this.orphanService.listAllRequests();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('deletion-request')
+  async removeRequest(@Body() dto: RequestRemovalDto, @Request() req): Promise<PrismaRequest> {
+  const userId = req.user?.userId;
+  return  this.orphanService.needRequestRemoval(dto, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/delete')
+  async deleteNeedRequest(@Param('id') requestId: string, @Request() req){
+    const userId = req.user?.userId;
+    return this.orphanService.deleteNeedRequest(requestId, userId);
+  }
+
+
 }

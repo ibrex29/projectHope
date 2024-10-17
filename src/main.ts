@@ -3,6 +3,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import * as compression from 'compression';
+import { VersioningType } from '@nestjs/common';
 
 const corsOptions: CorsOptions = {
   origin: true,
@@ -10,13 +11,17 @@ const corsOptions: CorsOptions = {
   allowedHeaders: ['*'], // Allow specific headers
 };
 
-
 async function bootstrap() {
-
   const app = await NestFactory.create(AppModule);
   app.use(compression()); // use compression to improve speed
   app.enableCors(corsOptions);
   app.setGlobalPrefix('api');
+  
+  // Enable versioning
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Hope API')
     .setDescription('The Hope API description')

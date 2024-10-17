@@ -34,8 +34,6 @@ model User {
   updatedIdentities               Identity[]                @relation("identity_updated_by")
   createdProfiles                 Profile[]                 @relation("profile_created_by")
   updatedProfiles                 Profile[]                 @relation("profile_updated_by")
-  createdRoles                    Role[]                    @relation("role_created_by")
-  updatedRoles                    Role[]                    @relation("role_updated_by")
   createdPermissions              Permission[]              @relation("permission_created_by")
   updatedPermissions              Permission[]              @relation("permission_updated_by")
   Orphan                          Orphan[]                  @relation("OrphanProfile")
@@ -50,6 +48,11 @@ model User {
   updatedState State[] @relation(name: "state_updated_by")
   createdLocalGovernment LocalGovernment[] @relation(name: "localGovernment_created_by")
   updatedLocalGovernment LocalGovernment[] @relation(name: "localGovernment_updated_by")
+  createdRequest Request[] @relation(name: "request_created_by")
+  updatedRequest Request[] @relation(name: "request_updated_by")
+  Request Request[] @relation("created_equest")
+  createdDonation Donation[] @relation(name: "donation_created_by")
+  updatedDonation Donation[] @relation(name: "donation_updated_by")
 }
 
 model Profile {
@@ -92,11 +95,6 @@ model Role {
 
   user        User[]       @relation("UserRoles")
   permissions Permission[] @relation("RolePermissions")
-
-  createdByUserId String?
-  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "role_created_by")
-  updatedByUserId String?
-  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "role_updated_by")
 
   @@map("roles")
 }
@@ -164,8 +162,6 @@ model LocalGovernment {
   updatedByUserId String?
   updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "localGovernment_updated_by")
 
-
-  
   profile   Profile[]
   state     State    @relation(fields: [stateId], references: [id], name: "StateToLocalGovernment")  
 }
@@ -189,6 +185,8 @@ model Orphan {
   id                     String    @id @default(uuid())
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
+  isDeleted         String?
+  deletionReason    String?
   trackingNumber         String
   picture                String?
   isAccepted             Boolean  @default(false)
@@ -216,56 +214,53 @@ model Request {
   id                String    @id @default(uuid())
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  status            Boolean @default(false)
+  status            String
   isApproved        Boolean @default(false)
-  need              String[]
+  isDeleted         String?
+  deletionReason    String?
   description       String
-  amountNeeded      Float
-  amountRecieved    Float @default(0)
   orphanId          String
-  orphan            Orphan     @relation("OrphanRequests", fields: [orphanId], references: [id])
-  donations         Donation[]  @relation("RequestDonations")
+  
+  createdByUserId        String?
+  userId                 String     @unique
+  updatedByUserId        String?
+  orphan                 Orphan     @relation("OrphanRequests", fields: [orphanId], references: [id])
+  donations              Donation[]  @relation("RequestDonations")
+  needs                  Need[]    @relation("RequestNeeds")
+  user                   User       @relation("created_equest", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy              User?      @relation(fields: [createdByUserId], references: [id], name: "request_created_by")
+  updatedBy              User?      @relation(fields: [updatedByUserId], references: [id], name: "request_updated_by") 
 
   @@map("requests")
 }
 
 model Need {
-  id                     String    @id @default(uuid())
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  
-  type                   String   
-  description            String?
-  schoolName String?
-  schoolStatus           Boolean?  
-  schoolAddress          String?
-  schoolContactPerson    String?
-  schoolContactPhone     String?
-  
-
-  hospitalName           String?
-  cardNumber             String?
-  diseaseType            String?
-
-  feedingProgram         String?  
-  mealFrequency          String?  
-
-  clothingSize           String?   
-  seasonalNeeds          Boolean?  
-
-  supportiveDocuments      String?
+  id                 String   @id @default(uuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  name  String   @unique
+  description        String?
+  additionalInfo     Json?
+  supportiveDocuments String?
+  requestId              String  
+  request                Request    @relation("RequestNeeds", fields: [requestId], references: [id]) 
 }
-
 model Donation{
   id                String    @id @default(uuid())
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  amountNeeded      Float
+  amountRecieved    Float @default(0)
+  amountDonated     Float @default(0)
   requestId         String
   request           Request    @relation("RequestDonations", fields: [requestId], references: [id])
-
   userId           String
   user             User     @relation("UserDonations", fields: [userId], references: [id])
+  createdByUserId        String?
+  updatedByUserId        String?
+  createdBy              User?      @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
+  updatedBy              User?      @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by") 
 
 }
 

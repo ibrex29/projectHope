@@ -1,97 +1,19 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrphanDto } from './dto/create-orphan.dto';
-import { UpdateOrphanDto } from './dto/update-orphan.dto';
-import { PrismaService } from 'prisma/prisma.service';
-import { generateTrackingNumber } from 'src/common/utils/generate-tracking-number';
 import { UserType } from '../users/types/user.type';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
-import { profile } from 'console';
-import { User } from '@prisma/client';
+import { PrismaService } from 'prisma/prisma.service';
+import { generateTrackingNumber } from 'src/common/utils/generate-tracking-number';
+import { Orphan, User } from '@prisma/client';
+import { Request as PrismaRequest } from '@prisma/client';
+import { CreateRequestDto } from './dto/create-request.dto';
+import { DeleteStatus, Status } from 'src/common/types/status.type';
+import { RequestRemovalDto } from './dto/request-removal.dto';
+import { OrphanRemovalDto } from './dto/orphan-request-removal.dto';
 
 @Injectable()
 export class OrphanService {
-  constructor(private readonly prisma:PrismaService){}
-
-  // async createOrphanAccount(createOrphanDto: CreateOrphanDto,userId:string) {
-
-  //   const roleName = UserType.ORPHAN;
-
-  //   const role = await this.prisma.role.findUnique({
-  //     where: {
-  //       roleName,
-  //     },
-  //   });
-
-  //   if (!role) {
-  //     throw new RoleNotFoundException(`Role '${roleName}' not found`);
-  //   }
-
-  //   // Find the local government by name to get its ID
-  //   const localGovernment = await this.prisma.localGovernment.findFirst({
-  //     where: { name: createOrphanDto.localGovernment },
-  //   });
-  
-  //   if (!localGovernment) {
-  //     throw new ConflictException('Local government not found');
-  //   }
-
-  //   // Create a new user
-  //   const user = await this.prisma.user.create({
-  //     data: {
-  //       email: null, 
-  //       password: "null",
-  //       roles: {
-  //         connectOrCreate: {
-  //           where: {
-  //             roleName,
-  //           },
-  //           create: {
-  //             roleName,
-  //           },
-  //         },
-  //       },
-  //       profile: {
-  //         create: {
-  //           firstName: createOrphanDto.firstName,
-  //           middleName: createOrphanDto.middleName,
-  //           lastName: createOrphanDto.lastName,
-  //           localGovernment: {
-  //             connect: { id: localGovernment.id },
-  //           },
-  //           dateOfBirth: createOrphanDto.dateOfBirth,
-  //           phoneNumber: createOrphanDto.schoolContactPhone,
-  //           gender: createOrphanDto.gender,
-  //           picture: createOrphanDto.picture,
-  //         },
-  //       },
-  //     },
-  //   });
-    
-  //   const trackingNumber = generateTrackingNumber();
-  //   // Create a new orphan and associate it with the user
-  //   const orphan = await this.prisma.orphan.create({
-  //     data: {
-  //       trackingNumber: trackingNumber,
-  //       picture: createOrphanDto.picture,
-  //       affidavitOfGuardianship: createOrphanDto.affidavitOfGuardianship,
-  //       schoolStatus: createOrphanDto.isEnrolled,
-  //       schoolName: createOrphanDto.schoolName,
-  //       schoolAddress: createOrphanDto.schoolAddress,
-  //       schoolContactPerson: createOrphanDto.schoolContactPerson,
-  //       schoolContactPhone: createOrphanDto.schoolContactPhone,
-  //       userId: user.id, 
-  //       createdByUserId:userId,
-  //     },
-  //   });
-
-  // // Retrieve the profile to return it along with user and orphan if needed
-  // const profile = await this.prisma.profile.findUnique({
-  //   where: { userId: user.id },
-  // });
-   
-  //   return {orphan,user,profile};
-  // }
-
+  constructor(private readonly prisma: PrismaService) {}
 
   async createProfile(createOrphanDto: CreateOrphanDto, userId: string, localGovernmentId: string) {
     return this.prisma.profile.create({
@@ -109,60 +31,42 @@ export class OrphanService {
         user: {
           connect: { id: userId },
         },
-
       },
     });
   }
-  
+
   async createOrphanAccount(createOrphanDto: CreateOrphanDto, userId: string) {
     const roleName = UserType.ORPHAN;
-  
-    const role = await this.prisma.role.findUnique({
-      where: {
-        roleName,
-      },
-    });
-  
-    if (!role) {
-      throw new RoleNotFoundException(`Role '${roleName}' not found`);
-    }
-  
-    // Find the local government by name to get its ID
+
+    const role = await this.prisma.role.findUnique({ where: { roleName } });
+    if (!role) throw new RoleNotFoundException(`Role '${roleName}' not found`);
+
     const localGovernment = await this.prisma.localGovernment.findFirst({
       where: { name: createOrphanDto.localGovernment },
     });
-  
-    if (!localGovernment) {
-      throw new ConflictException('Local government not found');
-    }
-  
-    // Create a new user
-    const user = await this.prisma.user.create({
+    if (!localGovernment) throw new ConflictException('Local government not found');
+
+    const createdUser = await this.prisma.user.create({
       data: {
         email: null,
         password: "null",
+        isActive:true,
+        isVerified:true,
         roles: {
           connectOrCreate: {
-            where: {
-              roleName,
-            },
-            create: {
-              roleName,
-            },
+            where: { roleName },
+            create: { roleName },
           },
         },
       },
     });
-  
-    // Create the profile separately
-    const profile = await this.createProfile(createOrphanDto, user.id, localGovernment.id);
-  
+
+    const profile = await this.createProfile(createOrphanDto, createdUser.id, localGovernment.id);
     const trackingNumber = generateTrackingNumber();
-  
-    // Create a new orphan and associate it with the user
+
     const orphan = await this.prisma.orphan.create({
       data: {
-        trackingNumber: trackingNumber,
+        trackingNumber,
         picture: createOrphanDto.picture,
         affidavitOfGuardianship: createOrphanDto.affidavitOfGuardianship,
         schoolStatus: createOrphanDto.isEnrolled,
@@ -170,100 +74,306 @@ export class OrphanService {
         schoolAddress: createOrphanDto.schoolAddress,
         schoolContactPerson: createOrphanDto.schoolContactPerson,
         schoolContactPhone: createOrphanDto.schoolContactPhone,
-        userId: user.id,
+        userId: createdUser.id,
         createdByUserId: userId,
       },
     });
-  
-    return { orphan, user, profile };
+
+    return { orphan, createdUser, profile };
   }
-  
-  async verifyUser(userId: string) {
-    return this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        isVerified: true,
-        updatedAt: new Date(), 
-      },
+
+  async acceptOrphan(orphanId: string, userId: string): Promise<Orphan> {
+    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
+    
+    if (!orphan) throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
+
+    return this.prisma.orphan.update({
+      where: { id: orphanId },
+      data: { isAccepted: true, updatedByUserId: userId },
     });
   }
 
-  async getOrphans(): Promise<User[]> {
+  async verifyUser(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        isVerified: true,
+        updatedAt: new Date(),
+      },
+    });
+  }
+  
+  async getAllOrphans(): Promise<User[]> {
     try {
-      // Fetch users with the "orphan" role, making sure they are not deleted, along with their profiles and orphans
-      return await this.prisma.user.findMany({
-        where: {
-          isDeleted: false, // Ensure user is not soft-deleted
-          roles: {
-            some: {
-              roleName: UserType.ORPHAN, // Check for the orphan role
+      const includeOrphanDetails = {
+        include: {
+          requests: {
+            include: {
+              donations: true,
+              needs: true,
             },
           },
+          createdBy: true,
+          updatedBy: true,
+        },
+      };
+  
+      return await this.prisma.user.findMany({
+        where: {
+          isDeleted: false,
+          roles: { some: { roleName: UserType.ORPHAN } },
         },
         include: {
           profile: true,
-          Orphan: true, 
+          Orphan: includeOrphanDetails,
         },
       });
     } catch (error) {
-      // Handle potential errors
+      console.error(`Error fetching users with orphan role: ${error.message}`);
       throw new Error(`Error fetching users with orphan role: ${error.message}`);
     }
   }
+  // async getOrphans(filterDto: OrphanFilterDto): Promise<User[]> {
+  //   const { page = 1, limit = 10, search = '', isAccepted } = filterDto;
   
-  async deleteOrphanAccount(userId: string) {
-    // Check if the user has the ORPHAN role
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { roles: true },  
-    });
+  //   const includeOrphanDetails = {
+  //     include: {
+  //       requests: {
+  //         include: {
+  //           donations: true,
+  //           needs: true,
+  //         },
+  //       },
+  //       createdBy: true,
+  //       updatedBy: true,
+  //     },
+  //   };
   
-    if (!user) {
-      throw new NotFoundException(`User with ID '${userId}' not found`);
-    }
+  //   const whereConditions: any = {
+  //     isDeleted: false,
+  //     roles: { some: { roleName: UserType.ORPHAN } },
+  //   };
   
-    // Verify if the user has the ORPHAN role
-    const hasOrphanRole = user.roles.some(role => role.roleName === UserType.ORPHAN);
+  //   // Add search filter if provided
+  //   if (search) {
+  //     whereConditions.profile = {
+  //       name: {
+  //         contains: search,
+  //         mode: 'insensitive',
+  //       },
+  //     };
+  //   }
   
-    if (!hasOrphanRole) {
-      throw new ForbiddenException(`User with ID '${userId}' does not have the ORPHAN role`);
-    }
+  //   // Check if isAccepted is provided
+  //   if (isAccepted !== undefined) {
+  //     whereConditions.Orphan = {
+  //       some: {
+  //         isAccepted: isAccepted, // Ensure this is a boolean
+  //       },
+  //     };
+  //   }
   
-    // Find the orphan by user ID
-    const orphan = await this.prisma.orphan.findUnique({
-      where: { userId },
-    });
+  //   console.log('Filter Conditions:', whereConditions); // Debugging line
   
+  //   const orphans = await this.prisma.user.findMany({
+  //     where: whereConditions,
+  //     include: {
+  //       profile: true,
+  //       Orphan: includeOrphanDetails,
+  //     },
+  //     skip: (page - 1) * limit,
+  //     take: Number(limit),
+  //   });
+  
+  //   console.log('Returned Orphans:', orphans); // Debugging line
+  //   return orphans;
+  // }
+  
+  // async deleteOrphanAccount(userId: string): Promise<{ message: string }> {
+  //   const user = await this.prisma.user.findUnique({
+  //     where: { id: userId },
+  //     include: { roles: true },
+  //   });
+
+  //   if (!user || !user.roles.some(role => role.roleName === UserType.ORPHAN)) {
+  //     throw new ForbiddenException(`User with ID '${userId}' does not have the ORPHAN role or does not exist`);
+  //   }
+
+  //   const orphanExists = await this.prisma.orphan.findUnique({ where: { userId } });
+  //   if (!orphanExists) {
+  //     throw new NotFoundException(`Orphan with user ID '${userId}' not found`);
+  //   }
+
+  //   await this.prisma.user.update({ where: { id: userId }, data: { isDeleted: true } });
+
+  //   return { message: `Orphan account with user ID '${userId}' has been deleted successfully` };
+  // }
+
+  async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
+    const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
+  
+    // Check if the orphan exists
+    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
     if (!orphan) {
-      throw new NotFoundException(`Orphan with user ID '${userId}' not found`);
+      throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
     }
   
-    // Soft-delete the user
-    await this.prisma.user.update({
-      where: { id: userId },
+    const needData = needs?.map(need => ({
+      name: need.name,
+      description: need.description,
+      additionalInfo: need.additionalInfo,
+      supportiveDocuments: need.supportiveDocuments,
+    })) || [];
+  
+    // Create the request
+    const request = await this.prisma.request.create({
       data: {
-        isDeleted: true,  // Soft-delete the user
+        description,
+        orphanId,
+        createdByUserId: userId,
+        userId: userId,
+        status: Status.PENDING,
+        isDeleted:DeleteStatus.NOT_DELETED,
+        needs: {
+          create: needData,
+        },
+        donations: {
+          create: { 
+            amountNeeded: amountNeeded , 
+            userId: orphan.userId,
+            amountRecieved:amountRecieved 
+          },
+        },
+      },
+      include: {
+        needs: true,
+        donations: true,
       },
     });
   
-    return { message: `Orphan account with user ID '${userId}' has been deleted successfully` };
+    return request;
+  }
+
+  async orphanDeletionRequest(dto: OrphanRemovalDto, userId: string): Promise<Orphan> {
+    if (!dto.orphanId) {
+      throw new Error("Request ID must be provided");
+    }
+  
+    const request = await this.prisma.orphan.findUnique({
+      where: { id: dto.orphanId },
+    });
+  
+    if (!request) {
+      throw new NotFoundException(`Request with ID '${dto.orphanId}' not found`);
+    }
+  
+    const updatedRequest = await this.prisma.orphan.update({
+      where: { id: dto.orphanId },
+      data: {
+        isDeleted: DeleteStatus.REQUEST_DELETION,
+        deletionReason: dto.deletionReason,
+        updatedByUserId: userId,
+      },
+    });
+  
+    return updatedRequest;
   }
   
-  findAll() {
-    return `This action returns all orphan`;
+
+  async deleteOrphan(orphanId: string, userId: string): Promise<Orphan> {
+    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
+    
+    if (!orphan) throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
+
+    return this.prisma.orphan.update({
+      where: { id: orphanId },
+      data: { isDeleted: DeleteStatus.DELETED, updatedByUserId: userId },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} orphan`;
+  async needRequestRemoval(dto: RequestRemovalDto, userId: string): Promise<PrismaRequest> {
+    // Check if the requestId is not provided
+    if (!dto.requestId) {
+      throw new Error("Orphan ID must be provided");
+    }
+  
+    const request = await this.prisma.request.findUnique({
+      where: { id: dto.requestId },
+    });
+  
+    if (!request) {
+      throw new NotFoundException(`Orphan with ID '${dto.requestId}' not found`);
+    }
+  
+    const updatedRequest = await this.prisma.request.update({
+      where: { id: dto.requestId },
+      data: {
+        isDeleted: DeleteStatus.REQUEST_DELETION,
+        deletionReason: dto.rejectionReason,
+        updatedByUserId: userId,
+      },
+    });
+  
+    return updatedRequest;
   }
 
-  update(id: number, updateOrphanDto: UpdateOrphanDto) {
-    return `This action updates a #${id} orphan`;
-  }
+    // async  getUsersWithAcceptedOrphans() {
+    //   try {
+    //     const usersWithAcceptedOrphans = await this.prisma.user.findMany({
+    //       where: {
+    //         isDeleted: false,
+    //         roles: {
+    //           some: {
+    //             roleName: 'orphan',
+    //           },
+    //         },
+    //         Orphan: {
+    //           some: {
+    //             isAccepted: true,
+    //           },
+    //         },
+    //       },
+    //       include: {
+    //         Orphan: true, // This will help you debug by seeing which orphans are linked
+    //       },
+    //     });
+    
+    //     console.log('Users with accepted orphans:', usersWithAcceptedOrphans);
+    //     return usersWithAcceptedOrphans; // Return the result for further processing
+    //   } catch (error) {
+    //     console.error('Error fetching users with accepted orphans:', error);
+    //     throw error; // Rethrow the error for further handling
+    //   }
+    // }
 
-  remove(id: number) {
-    return `This action removes a #${id} orphan`;
+    async deleteNeedRequest(requestId: string, userId: string) {
+      return this.prisma.request.update({
+        where: { id: requestId },
+        data: { isDeleted: DeleteStatus.DELETED, updatedByUserId: userId },
+      });
+    }
+
+    async listAllRequests() {
+      try {
+        const requests = await this.prisma.request.findMany({
+          where: {
+            isDeleted: DeleteStatus.REQUEST_DELETION,          },
+          include: {
+            orphan: true,       
+            donations: true,   
+            needs: true,      
+            user: {
+              select:{
+                profile:true,
+              }
+            },        
+            createdBy: true,    
+            updatedBy: true,    
+          },
+        });
+        return requests;
+      } catch (error) {
+        throw new Error(`Failed to list all requests: ${error.message}`);
+      }
+    }
   }
-}

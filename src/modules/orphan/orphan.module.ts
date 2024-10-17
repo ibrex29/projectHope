@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { OrphanService } from './orphan.service';
-import { OrphanController } from './orphan.controller';
+import { OrphanController, RequestController } from './orphan.controller';
 import { PrismaService } from 'prisma/prisma.service';
 
 @Module({
-  controllers: [OrphanController],
+  controllers: [OrphanController,RequestController],
   providers: [OrphanService,PrismaService],
 })
 export class OrphanModule {}

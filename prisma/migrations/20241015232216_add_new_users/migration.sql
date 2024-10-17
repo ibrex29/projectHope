@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Donation" ADD COLUMN     "amountDonated" DOUBLE PRECISION NOT NULL DEFAULT 0;

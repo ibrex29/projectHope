@@ -135,25 +135,4 @@ export class UsersController {
     await this.userService.deleteUser(userId);
   }
 
-  // @Version('1')
-  // @Post('/:userId')
-  // createUserProfile(
-  //   @Param('userId', ParseUUIDPipe) userId: string,
-  //   @Body() createUserProfileDto: CreateUserProfileDto,
-  // ) {
-  //   return this.userService.createUserProfile(userId, createUserProfileDto);
-  // }
-
-  // @Version('1')
-  // @Get('/company/:companyId')
-  // async getCompanyProfile(
-  //   @Param('companyId', ParseUUIDPipe) companyId: string,
-  // ) {
-  //   const company = await this.userService.getCompanyProfile(companyId);
-  //   if (company) {
-  //     return new SerializedUser(company);
-  //   } else {
-  //     throw new UserNotFoundException();
-  //   }
-  // }
 }
