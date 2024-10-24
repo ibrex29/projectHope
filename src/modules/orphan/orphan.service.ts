@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrphanDto } from './dto/create-orphan.dto';
 import { UserType } from '../users/types/user.type';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
@@ -101,6 +101,31 @@ export class OrphanService {
         updatedAt: new Date(),
       },
     });
+  }
+
+  async getMyOrphans(userId: string): Promise<Orphan[]> {
+    try {
+      return await this.prisma.orphan.findMany({
+        where: {
+          // isDeleted: DeleteStatus.NOT_DELETED, 
+          createdByUserId: userId, 
+        },
+        include: {
+          requests: {
+            include: {
+              donations: true, 
+              needs: true,  
+            },
+          },
+          createdBy: true,
+          updatedBy: true,
+          user: true, 
+        },
+      });
+    } catch (error) {
+      console.error(`Error fetching orphans created by user ${userId}: ${error.message}`);
+      throw new Error(`Error fetching orphans created by user ${userId}: ${error.message}`);
+    }
   }
   
   async getAllOrphans(): Promise<User[]> {

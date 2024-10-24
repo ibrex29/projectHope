@@ -163,57 +163,6 @@ export class UsersService {
     return { employmentDetails, profile, identity };
   }
   
-  
-  
-
-
-
-// async findUsers(query: FetchUsersDTO) {
-//     const { role,roleName, search, sortField, sortOrder } = query;
-//     const where: Prisma.UserWhereInput = {};
-//     if (role) {
-//       where.roles = { some: { roleName:roleName, isActive: true } };
-//     }
-//     if (search) {
-//       where.OR = [
-//         { email: { contains: search, mode: 'insensitive' } },
-//         {
-//           profile: {
-//             OR: [
-//               { firstName: { contains: search, mode: 'insensitive' } },
-//               { lastName: { contains: search, mode: 'insensitive' } },
-//               { middleName: { contains: search, mode: 'insensitive' } },
-//             ],
-//           },
-//         },
-//       ];
-//     }
-
-//     let orderBy: Prisma.UserOrderByWithRelationInput = { id: 'asc' };
-//     if (sortField) {
-//       orderBy =
-//         sortField == 'fullName'
-//           ? { profile: { firstName: sortOrder } }
-//           : { [sortField]: sortOrder };
-//     }
-
-//     const option = {
-//       where,
-//       query,
-//       include: {
-//         profile: true,
-//         roles: true,
-//       },
-//       orderBy,
-//     };
-
-//     const paginatedUsers = await this.prisma.paginate<User>('User', option);
-//     return {
-//       ...paginatedUsers,
-//       data: paginatedUsers.data.map((user) => new SerializedUser(user)),
-//     };
-//   }
-
   async findUserByPhoneNumber(phoneNumber: string) {
     return this.prisma.user.findFirst({
       where: {

@@ -32,19 +32,6 @@ import { CreateProfileDto } from '../dtos/profile/create-user-profile.dto';
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
-  // @Version('1')
-  // @UseInterceptors(ClassSerializerInterceptor) // serialize response from endpoint
-  // @Get('')
-  // async getUsers(@Query() query: FetchUsersDTO) {
-  //   return this.userService.findUsers(query);
-  // }
-
-//   @Version('1') 
-//   @Get('/admins')
-//   async getAllAdmins() {
-//  return this.userService.findAllAdmins();
-//   }
-
   @Public()
   @Version('1')
   @Post('')
@@ -82,15 +69,6 @@ export class UsersController {
     }
   }
 
-  // @Version('1')
-  // @Patch('/:userId')
-  // async updateUserById(
-  //   @Param('userId', ParseUUIDPipe) userId: string,
-  //   @Body() updateUserDto: UpdateUserDto,
-  // ) {
-  //   await this.userService.updateUser(userId, updateUserDto);
-  // }
-
   @Version('1')
   @Patch('/:userId/roles')
   async updateUserRoles(
@@ -102,8 +80,6 @@ export class UsersController {
       updateUserRolesDto.roleNames,
     );
   }
-
-
 
   @Version('1')
   @Delete('/:userId/roles')

@@ -185,7 +185,7 @@ model Orphan {
   id                     String    @id @default(uuid())
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
-  isDeleted         String?
+  isDeleted         String?        @default("not_deleted")
   deletionReason    String?
   trackingNumber         String
   picture                String?

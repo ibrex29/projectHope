@@ -1,9 +1,9 @@
-import { Controller,Put, Body, Request, Get, Param,} from '@nestjs/common';
+import { Controller, Body, Get, Param, Patch,} from '@nestjs/common';
 import { SponsorService } from './sponsor.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UpdateDonationDto } from './dto/create-donation.dto';
-import { User } from '@prisma/client';
 import { Public } from 'src/common/constants/routes.constant';
+import { User } from 'src/common/decorators/param-decorator/User.decorator';
 
 
 @ApiTags("sponsor")
@@ -12,23 +12,20 @@ import { Public } from 'src/common/constants/routes.constant';
 export class SponsorController {
   constructor(private readonly sponsorService: SponsorService) {}
 
-  @Put()
-  async updateDonation(@Body() updateDonationDto: UpdateDonationDto,@Request() req) {
-    const userId = req.user?.userId;
-    return this.sponsorService.updateDonationByRequest(updateDonationDto,userId);
+  @Patch()
+  async updateDonation(@Body() updateDonationDto: UpdateDonationDto,@User('userId') userId: string) {
+    return this.sponsorService.createDonationByRequest(updateDonationDto,userId);
   }
 
   @Public()
   @Get()
-  async getAllOrphans(): Promise<User[]> {
+  async getAllOrphans(){
     return this.sponsorService.getAllSponsors();
   }
 
-  @Get('user/:userId')
-  async getDonationsByUser(@Param('userId') userId: string) {
+  @Get('my-donation')
+  async getDonationsByUser(@User('userId') userId: string) {
     return this.sponsorService.getDonationsAndRequestsByUser(userId);
   }
 
-  
- 
 }

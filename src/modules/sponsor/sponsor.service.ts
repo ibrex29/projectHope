@@ -2,14 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { UpdateDonationDto } from './dto/create-donation.dto';
 import { UserType } from '../users/types/user.type';
-import { User } from '@prisma/client';
-import { profile } from 'console';
-
+import { User } from '@prisma/client'
 @Injectable()
 export class SponsorService {
   constructor(private readonly prisma:PrismaService){}
 
-  async updateDonationByRequest(data: UpdateDonationDto,userId:string) {
+  async createDonationByRequest(data: UpdateDonationDto,userId:string) {
     try {
       // Find the existing donation using the requestId
       const donation = await this.prisma.donation.findFirst({
