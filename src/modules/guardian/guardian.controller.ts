@@ -1,40 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body} from '@nestjs/common';
 import { GuardianService } from './guardian.service';
-import { CreateGuardianDto } from './dto/create-guardian.dto';
-import { UpdateGuardianDto } from './dto/update-guardian.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from '../auth/guard/role.guard';
+import { CreateUserDto } from '../users/dtos/user/create-user.dto';
+import { Public } from 'src/common/constants/routes.constant';
 
-// @RolesGuard()
-@UseGuards(RolesGuard)
 @ApiTags("guardian")
-@Controller('guardian')
+@Controller({ path: 'guardian', version: '1' })
 export class GuardianController {
   constructor(private readonly guardianService: GuardianService) {}
 
-  @Post()
-  create(@Body() createGuardianDto: CreateGuardianDto) {
-    return this.guardianService.create(createGuardianDto);
+  @Public()
+  @Post('')
+  createUser(@Body() createUserDto: CreateUserDto) {
+    return this.guardianService.createGuardian(createUserDto);
   }
 
   @Get()
-  findAll() {
-    return this.guardianService.findAll();
+  async getAllGuardian(){
+    return this.guardianService.getAllGuardian();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.guardianService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGuardianDto: UpdateGuardianDto) {
-    return this.guardianService.update(+id, updateGuardianDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.guardianService.remove(+id);
-  }
-
+  
 }

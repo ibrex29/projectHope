@@ -93,6 +93,17 @@ export class OrphanService {
     });
   }
 
+  async rejectOrphan(orphanId: string, userId: string): Promise<Orphan> {
+    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
+    
+    if (!orphan) throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
+
+    return this.prisma.orphan.update({
+      where: { id: orphanId },
+      data: { isAccepted: false, updatedByUserId: userId },
+    });
+  }
+
   async verifyUser(userId: string) {
     return this.prisma.user.update({
       where: { id: userId },
@@ -107,7 +118,7 @@ export class OrphanService {
     try {
       return await this.prisma.orphan.findMany({
         where: {
-          // isDeleted: DeleteStatus.NOT_DELETED, 
+          isDeleted: DeleteStatus.NOT_DELETED, 
           createdByUserId: userId, 
         },
         include: {
@@ -158,81 +169,6 @@ export class OrphanService {
       throw new Error(`Error fetching users with orphan role: ${error.message}`);
     }
   }
-  // async getOrphans(filterDto: OrphanFilterDto): Promise<User[]> {
-  //   const { page = 1, limit = 10, search = '', isAccepted } = filterDto;
-  
-  //   const includeOrphanDetails = {
-  //     include: {
-  //       requests: {
-  //         include: {
-  //           donations: true,
-  //           needs: true,
-  //         },
-  //       },
-  //       createdBy: true,
-  //       updatedBy: true,
-  //     },
-  //   };
-  
-  //   const whereConditions: any = {
-  //     isDeleted: false,
-  //     roles: { some: { roleName: UserType.ORPHAN } },
-  //   };
-  
-  //   // Add search filter if provided
-  //   if (search) {
-  //     whereConditions.profile = {
-  //       name: {
-  //         contains: search,
-  //         mode: 'insensitive',
-  //       },
-  //     };
-  //   }
-  
-  //   // Check if isAccepted is provided
-  //   if (isAccepted !== undefined) {
-  //     whereConditions.Orphan = {
-  //       some: {
-  //         isAccepted: isAccepted, // Ensure this is a boolean
-  //       },
-  //     };
-  //   }
-  
-  //   console.log('Filter Conditions:', whereConditions); // Debugging line
-  
-  //   const orphans = await this.prisma.user.findMany({
-  //     where: whereConditions,
-  //     include: {
-  //       profile: true,
-  //       Orphan: includeOrphanDetails,
-  //     },
-  //     skip: (page - 1) * limit,
-  //     take: Number(limit),
-  //   });
-  
-  //   console.log('Returned Orphans:', orphans); // Debugging line
-  //   return orphans;
-  // }
-  
-  // async deleteOrphanAccount(userId: string): Promise<{ message: string }> {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { id: userId },
-  //     include: { roles: true },
-  //   });
-
-  //   if (!user || !user.roles.some(role => role.roleName === UserType.ORPHAN)) {
-  //     throw new ForbiddenException(`User with ID '${userId}' does not have the ORPHAN role or does not exist`);
-  //   }
-
-  //   const orphanExists = await this.prisma.orphan.findUnique({ where: { userId } });
-  //   if (!orphanExists) {
-  //     throw new NotFoundException(`Orphan with user ID '${userId}' not found`);
-  //   }
-
-  //   await this.prisma.user.update({ where: { id: userId }, data: { isDeleted: true } });
-
-  //   return { message: `Orphan account with user ID '${userId}' has been deleted successfully` };
-  // }
 
   async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
     const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
@@ -341,35 +277,6 @@ export class OrphanService {
   
     return updatedRequest;
   }
-
-    // async  getUsersWithAcceptedOrphans() {
-    //   try {
-    //     const usersWithAcceptedOrphans = await this.prisma.user.findMany({
-    //       where: {
-    //         isDeleted: false,
-    //         roles: {
-    //           some: {
-    //             roleName: 'orphan',
-    //           },
-    //         },
-    //         Orphan: {
-    //           some: {
-    //             isAccepted: true,
-    //           },
-    //         },
-    //       },
-    //       include: {
-    //         Orphan: true, // This will help you debug by seeing which orphans are linked
-    //       },
-    //     });
-    
-    //     console.log('Users with accepted orphans:', usersWithAcceptedOrphans);
-    //     return usersWithAcceptedOrphans; // Return the result for further processing
-    //   } catch (error) {
-    //     console.error('Error fetching users with accepted orphans:', error);
-    //     throw error; // Rethrow the error for further handling
-    //   }
-    // }
 
     async deleteNeedRequest(requestId: string, userId: string) {
       return this.prisma.request.update({

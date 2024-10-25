@@ -8,18 +8,17 @@ import { User } from 'src/common/decorators/param-decorator/User.decorator';
 
 @ApiTags("sponsor")
 @ApiBearerAuth()
-@Controller('sponsor')
+@Controller({ path: 'sponsor', version: '1' })
 export class SponsorController {
   constructor(private readonly sponsorService: SponsorService) {}
 
   @Patch()
-  async updateDonation(@Body() updateDonationDto: UpdateDonationDto,@User('userId') userId: string) {
+  async createDonation(@Body() updateDonationDto: UpdateDonationDto,@User('userId') userId: string) {
     return this.sponsorService.createDonationByRequest(updateDonationDto,userId);
   }
 
-  @Public()
   @Get()
-  async getAllOrphans(){
+  async getAllSponsor(){
     return this.sponsorService.getAllSponsors();
   }
 
