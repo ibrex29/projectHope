@@ -190,9 +190,17 @@ export class UsersService {
         password: true,
         roles: true,
         isActive: true,
+        profile: {
+          select: {
+            firstName: true,
+            middleName: true,
+            lastName: true,
+          },
+        },
       },
     });
   }
+  
 
   async findUserById(id: string): Promise<User> {
     return this.prisma.user.findUnique({

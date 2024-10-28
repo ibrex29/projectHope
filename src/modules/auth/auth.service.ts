@@ -27,20 +27,22 @@ export class AuthService {
   }
 
   async login(user: any) {
-    // return payload that will be used in user session
-    // TODO: add user roles in payload for RoleGuard
     const payload: JwtPayload = {
       phoneNumber: user.phoneNumber,
       sub: user.id,
       email: user.email,
+      firstName: user.profile?.firstName,
+      middleName: user.profile?.middleName,
+      lastName: user.profile?.lastName,
       roles: user.roles,
     };
     const tokens = await this.jwtTokenService.generateToken(payload);
     return {
       ...tokens,
-      roles: payload.roles,
+      profile: payload,
     };
   }
+  
 
   async logout(token: string) {
     return this.jwtTokenService.blacklist(token);
