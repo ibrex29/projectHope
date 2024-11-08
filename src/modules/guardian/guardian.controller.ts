@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException} from '@nestjs/common';
 import { GuardianService } from './guardian.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '../users/dtos/user/create-user.dto';
 import { Public } from 'src/common/constants/routes.constant';
 
+@ApiBearerAuth()
 @ApiTags("guardian")
 @Controller({ path: 'guardian', version: '1' })
 export class GuardianController {
@@ -20,5 +21,9 @@ export class GuardianController {
     return this.guardianService.getAllGuardian();
   }
 
-  
+  @Get(':id/has-orphans')
+  async checkGuardianOrphans(@Param('id') id: string) {
+    return await this.guardianService.hasOrphans(id);
+  }
+
 }

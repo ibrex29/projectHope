@@ -6,6 +6,7 @@ import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exceptio
 import { UserAlreadyExistsException } from '../users/exceptions/UserAlreadyExists.exception';
 import { UserType } from '../users/types/user.type';
 import * as bcrypt from 'bcrypt';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class GuardianService {
@@ -94,6 +95,49 @@ export class GuardianService {
       console.error(`Error fetching users with Guardian role: ${error.message}`);
       throw new Error(`Error fetching users with Guardian role: ${error.message}`);
     }
+  }
+
+  //Checking if guardian has orphan
+  // async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean; count: number }> {
+  //   try {
+  //     const count = await this.prisma.orphan.count({
+  //       where: { userId: guardianId },
+  //     });
+  
+  //     return { hasOrphans: count > 0, count };
+  //   } catch (error) {
+  //     console.error(`Error checking orphans for guardian ${guardianId}: ${error.message}`);
+  //     throw new Error(`Error retrieving orphans for guardian with ID ${guardianId}.`);
+  //   }
+  // }
+
+  async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean }> {
+    try {
+      const userWithRoleAndOrphans = await this.prisma.user.findUnique({
+        where: { id: guardianId },
+        include: {
+          roles: true,
+          Orphan: true,
+        },
+      });
+  
+      if (!userWithRoleAndOrphans) {
+        throw new Error(`User with ID ${guardianId} not found.`);
+      }
+  
+      const isGuardian = userWithRoleAndOrphans.roles.some(role => role.roleName === UserType.GUARDIAN);
+  
+      if (!isGuardian) {
+        return { hasOrphans: false };
+      }
+  
+      const orphanCount = userWithRoleAndOrphans.Orphan.length;
+  
+      return { hasOrphans: orphanCount > 0};
+      } catch (error) {
+        console.error(`Error checking orphans for guardian ${guardianId}: ${error.message}`);
+        throw new Error(`Failed to retrieve orphans for guardian with ID ${guardianId}.`);
+      }
   }
   
 }
