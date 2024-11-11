@@ -17,11 +17,14 @@ export class AnalyticsController {
     return this.analyticsService.create(createAnalyticsDto);
   }
 
-  @Get("analytics")
-AllOrphans() {
+  //Renamed the endpoint to @Get("counts") and the method to getUserRolesCounts().
+	//This makes it clearer that the endpoint provides aggregated counts of different user roles.
+  //@Get("analytics")
+  //AllOrphans() {
+  @Get("counts")
+  getUserRolesCounts() {
     return this.analyticsService.countOrphansSponsorsAndGuardians();
   }
-
 
   @Get(':id')
   findOne(@Param('id') id: string) {
