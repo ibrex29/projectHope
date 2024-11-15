@@ -51,4 +51,9 @@ export class OrphanController {
     return this.orphanService.deleteOrphan(orphanId, userId);
   }
 
+  @Get('orphans-stats')
+  async getAllOrphansStats() {
+    return this.orphanService.getAllOrphansStats();
+  }
+
 }
