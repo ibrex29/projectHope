@@ -308,4 +308,113 @@ export class OrphanService {
         throw new Error(`Failed to list all requests: ${error.message}`);
       }
     }
+
+    private async getTotalOrphans() {
+      return this.prisma.orphan.count({
+        where: {
+          isDeleted: DeleteStatus.NOT_DELETED,
+        },
+      });
+    }
+
+
+
+    private async getNeeds(){
+      //Get all the needs related to requests of orphans that are not deleted, grouping by name
+      const groupedNeeds = await this.prisma.need.groupBy({
+        by: ['name'],
+        _count: {
+          id: true,
+        },
+        _max: {
+          updatedAt: true,  // Get the latest updatedAt for each group
+        },
+        where: {
+          request: {
+            orphan: {
+              isDeleted: DeleteStatus.NOT_DELETED,
+            },
+          },
+        },
+        orderBy: {
+          _max: {
+            updatedAt: 'desc',  // Order by the latest updatedAt date within each group
+          },
+        },
+      });
+
+      // Fetch the associated donations and calculate the total amountNeeded and amountRecieved per need.
+      const needsWithAmountNeeded = await Promise.all(groupedNeeds.map(async (need) => {
+        const donations = await this.prisma.donation.findMany({
+          where: {
+            requestId: {
+              in: await this.prisma.need.findMany({
+                where: {
+                  name: need.name,
+                },
+                select: {
+                  requestId: true,
+                },
+              }).then((needs) => needs.map((n) => n.requestId)),
+            },
+          },
+          select: {
+            amountNeeded: true,
+            amountRecieved: true,
+          },
+        });
+      
+      const totalAmountNeeded = donations.reduce((sum, donation) => sum + donation.amountNeeded, 0);
+      const totalAmountRecieved = donations.reduce((sum, donation) => sum + donation.amountRecieved, 0);
+
+      return {
+        name: need.name,
+        count: need._count.id,
+        amountNeeded: totalAmountNeeded,
+        amountRecieved: totalAmountRecieved,
+      };
+    }));
+    
+      return {
+        orphanNeeds: needsWithAmountNeeded,
+      };
+    }
+
+    private async getOrphanGenderCount() {
+      const orphans = await this.prisma.orphan.findMany({
+        include: {
+          user: {
+            include: {
+              profile: true,
+            },
+          },
+        },
+      });
+  
+      const genderCounts: Record<string, number> = {};
+
+      orphans.forEach((orphan) => {
+      const gender = orphan.user.profile.gender;
+
+      if (gender) {
+      genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+      }
+      });
+      return genderCounts;
+    }
+
+    // Public method to get all orphan stats
+    async getAllOrphansStats() {
+      const [totalOrphans, needs, genderCount] = await Promise.all([
+        this.getTotalOrphans(),
+        this.getNeeds(),
+        this.getOrphanGenderCount(),
+      ]);
+    
+      return {
+        totalOrphans,
+        needs,
+        genderCount,
+      };
+    }
   }
