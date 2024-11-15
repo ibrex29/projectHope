@@ -4,8 +4,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
 import { Public } from 'src/common/constants/routes.constant';
-import { User as UserDecorator } from 'src/common/decorators/param-decorator/User.decorator';
-import { User } from '@prisma/client';
+import { User } from 'src/common/decorators/param-decorator/User.decorator';
+
 
 @ApiBearerAuth()
 @ApiTags("guardian")
@@ -19,10 +19,10 @@ export class GuardianController {
     return this.guardianService.createGuardian(createGuardianDto);
   }
 
-  @Put(':id')
-  async updateGuardian(@UserDecorator('userId') userId: string, @Body() updateGuardianDto: UpdateGuardianDto): Promise<User> {
-    return this.guardianService.updateGuardian(userId, updateGuardianDto);
-  }
+  // @Put(':id')
+  // async updateGuardian(@UserDecorator('userId') userId: string, @Body() updateGuardianDto: UpdateGuardianDto): Promise<User> {
+  //   return this.guardianService.updateGuardian(userId, updateGuardianDto);
+  // }
   
   @Get()
   async getAllGuardian(){
@@ -30,7 +30,7 @@ export class GuardianController {
   }
 
   @Get('has-orphans')
-  async checkGuardianOrphans(@UserDecorator('userId') userId: string) {
+  async checkGuardianOrphans(@User('userId') userId: string) {
     return await this.guardianService.hasOrphans(userId);
   }
 

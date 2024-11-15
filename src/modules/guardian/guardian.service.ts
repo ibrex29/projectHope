@@ -135,61 +135,60 @@ export class GuardianService {
     }
   }
 
-  //Check if guardian has orphan
   async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean }> {
-    const userWithRoleAndOrphans = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: guardianId },
       include: {
         roles: true,
-        Orphan: true,
       },
     });
-
-    if (!userWithRoleAndOrphans) {
+  
+    if (!user) {
       throw new Error(`User with ID ${guardianId} not found.`);
     }
 
-    const isGuardian = userWithRoleAndOrphans.roles.some(role => role.roleName === UserType.GUARDIAN);
-
-    if (!isGuardian) {
-      return { hasOrphans: false };
-    }
-
-    const orphanCount = userWithRoleAndOrphans.Orphan.length;
-
-    return { hasOrphans: orphanCount > 0};
+    const orphanCount = await this.prisma.orphan.count({
+      where: { createdByUserId: guardianId },
+    });
+  
+    return { hasOrphans: orphanCount > 0 };
   }
   
   async getTopGuardian(): Promise<{ name: string; email: string; profilePicture: string | null; orphanCount: number }[]> {
-    const guardians = await this.prisma.user.findMany({
-      where: {
-        isDeleted: false,
-        roles: { some: { roleName: UserType.GUARDIAN } },
-      },
-      select: {
-        email: true,
-        profile: {
-          select: {
-            firstName: true,
-            lastName: true,
-            picture: true,
-          },
-        },
-        _count: {
-          select: {
-            Orphan: true,
-          },
+  const guardians = await this.prisma.user.findMany({
+    where: {
+      isDeleted: false,
+      roles: { some: { roleName: UserType.GUARDIAN } },
+    },
+    select: {
+      email: true,
+      profile: {
+        select: {
+          firstName: true,
+          lastName: true,
+          picture: true,
         },
       },
-    });
+      id: true,
+    },
+  });
 
-    return guardians
-      .map((guardian) => ({
-        name: `${guardian.profile.firstName} ${guardian.profile.lastName}`,
-        email: guardian.email,
-        profilePicture: guardian.profile.picture,
-        orphanCount: guardian._count.Orphan,
-      }))
-      .sort((a, b) => b.orphanCount - a.orphanCount);
-  }
+  const orphanCounts = await Promise.all(
+    guardians.map(async (guardian) => {
+      const orphanCount = await this.prisma.orphan.count({
+        where: { createdByUserId: guardian.id },
+      });
+      return orphanCount;
+    })
+  );
+
+  return guardians
+    .map((guardian, index) => ({
+      name: `${guardian.profile.firstName} ${guardian.profile.lastName}`,
+      email: guardian.email,
+      profilePicture: guardian.profile.picture,
+      orphanCount: orphanCounts[index],
+    }))
+    .sort((a, b) => b.orphanCount - a.orphanCount);
+}
 }

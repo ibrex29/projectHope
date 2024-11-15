@@ -118,7 +118,7 @@ export class OrphanService {
     try {
       return await this.prisma.orphan.findMany({
         where: {
-          isDeleted: DeleteStatus.NOT_DELETED, 
+          // isDeleted: DeleteStatus.NOT_DELETED, 
           createdByUserId: userId, 
         },
         include: {
