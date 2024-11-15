@@ -1,12 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
-const saltRounds = 10; // For password hashing
-
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, saltRounds);
-}
 
 async function main() {
   // Seed Roles
