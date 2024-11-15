@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { User } from '@prisma/client';
-import { CreateUserDto } from '../users/dtos/user/create-user.dto';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
 import { UserAlreadyExistsException } from '../users/exceptions/UserAlreadyExists.exception';
 import { UserType } from '../users/types/user.type';
 import * as bcrypt from 'bcrypt';
 import { NotFoundError } from 'rxjs';
+import { CreateGuardianDto } from './dto/create-guardian.dto';
+import { UpdateGuardianDto } from './dto/update-guardian.dto';
 
 @Injectable()
 export class GuardianService {
   constructor(private readonly prisma:PrismaService){}
 
-  async createGuardian(userDetails: CreateUserDto): Promise<User> {
+  async createGuardian(userDetails: CreateGuardianDto): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: {
         email: userDetails.email,
@@ -66,6 +67,43 @@ export class GuardianService {
     });
   }
 
+  async updateGuardian(guardianId: string, updateData: UpdateGuardianDto): Promise<User> {
+    const guardian = await this.prisma.user.findUnique({
+      where: { id: guardianId },
+      include: { roles: true, profile: true },
+    });
+  
+    if (!guardian) {
+      throw new Error(`Guardian with ID ${guardianId} not found.`);
+    }
+  
+    const isGuardian = guardian.roles.some(role => role.roleName === UserType.GUARDIAN);
+    if (!isGuardian) {
+      throw new Error('User is not a Guardian');
+    }
+  
+    // Perform the update operation
+    return this.prisma.user.update({
+      where: { id: guardianId },
+      data: {
+        email: updateData.email,
+        password: updateData.password,
+        phoneNumber: updateData.phoneNumber,
+        profile: {
+          update: {
+            firstName: updateData.profile?.firstName,
+            middleName: updateData.profile?.middleName,
+            lastName: updateData.profile?.lastName,
+            dateOfBirth: updateData.profile?.dateOfBirth,
+            updatedBy: {
+              connect: { id: guardianId },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async getAllGuardian(): Promise<User[]> {
     try {
       const includeOrphanDetails = {
@@ -97,47 +135,61 @@ export class GuardianService {
     }
   }
 
-  //Checking if guardian has orphan
-  // async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean; count: number }> {
-  //   try {
-  //     const count = await this.prisma.orphan.count({
-  //       where: { userId: guardianId },
-  //     });
-  
-  //     return { hasOrphans: count > 0, count };
-  //   } catch (error) {
-  //     console.error(`Error checking orphans for guardian ${guardianId}: ${error.message}`);
-  //     throw new Error(`Error retrieving orphans for guardian with ID ${guardianId}.`);
-  //   }
-  // }
-
+  //Check if guardian has orphan
   async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean }> {
-    try {
-      const userWithRoleAndOrphans = await this.prisma.user.findUnique({
-        where: { id: guardianId },
-        include: {
-          roles: true,
-          Orphan: true,
-        },
-      });
-  
-      if (!userWithRoleAndOrphans) {
-        throw new Error(`User with ID ${guardianId} not found.`);
-      }
-  
-      const isGuardian = userWithRoleAndOrphans.roles.some(role => role.roleName === UserType.GUARDIAN);
-  
-      if (!isGuardian) {
-        return { hasOrphans: false };
-      }
-  
-      const orphanCount = userWithRoleAndOrphans.Orphan.length;
-  
-      return { hasOrphans: orphanCount > 0};
-      } catch (error) {
-        console.error(`Error checking orphans for guardian ${guardianId}: ${error.message}`);
-        throw new Error(`Failed to retrieve orphans for guardian with ID ${guardianId}.`);
-      }
+    const userWithRoleAndOrphans = await this.prisma.user.findUnique({
+      where: { id: guardianId },
+      include: {
+        roles: true,
+        Orphan: true,
+      },
+    });
+
+    if (!userWithRoleAndOrphans) {
+      throw new Error(`User with ID ${guardianId} not found.`);
+    }
+
+    const isGuardian = userWithRoleAndOrphans.roles.some(role => role.roleName === UserType.GUARDIAN);
+
+    if (!isGuardian) {
+      return { hasOrphans: false };
+    }
+
+    const orphanCount = userWithRoleAndOrphans.Orphan.length;
+
+    return { hasOrphans: orphanCount > 0};
   }
   
+  async getTopGuardian(): Promise<{ name: string; email: string; profilePicture: string | null; orphanCount: number }[]> {
+    const guardians = await this.prisma.user.findMany({
+      where: {
+        isDeleted: false,
+        roles: { some: { roleName: UserType.GUARDIAN } },
+      },
+      select: {
+        email: true,
+        profile: {
+          select: {
+            firstName: true,
+            lastName: true,
+            picture: true,
+          },
+        },
+        _count: {
+          select: {
+            Orphan: true,
+          },
+        },
+      },
+    });
+
+    return guardians
+      .map((guardian) => ({
+        name: `${guardian.profile.firstName} ${guardian.profile.lastName}`,
+        email: guardian.email,
+        profilePicture: guardian.profile.picture,
+        orphanCount: guardian._count.Orphan,
+      }))
+      .sort((a, b) => b.orphanCount - a.orphanCount);
+  }
 }

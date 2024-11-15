@@ -18,7 +18,7 @@ import {
 import { RequestService } from '../request.service';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
 
-  
+@ApiBearerAuth()
 @ApiTags('Request')
 @Controller({ path: 'request', version: '1' })
 export class RequestController {
