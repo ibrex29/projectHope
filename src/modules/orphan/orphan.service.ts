@@ -141,19 +141,6 @@ export class OrphanService {
   
   async getAllOrphans(): Promise<User[]> {
     try {
-      const includeOrphanDetails = {
-        include: {
-          requests: {
-            include: {
-              donations: true,
-              needs: true,
-            },
-          },
-          createdBy: true,
-          updatedBy: true,
-        },
-      };
-  
       return await this.prisma.user.findMany({
         where: {
           isDeleted: false,
@@ -164,19 +151,36 @@ export class OrphanService {
             include: {
               localGovernment: {
                 include: {
-                  state: true, 
+                  state: true,
                 },
               },
             },
           },
-          Orphan: includeOrphanDetails,
+          Orphan: {
+            include: {
+              requests: {
+                include: {
+                  donations: true,
+                  needs: true,
+                },
+              },
+              createdBy: true,
+              updatedBy: true,
+            },
+          },
         },
-      });
+      }).then(users => 
+        users.map(user => ({
+          ...user,
+          Orphan: user.Orphan?.length ? user.Orphan[0] : null, // Transform Orphan array to object
+        }))
+      );
     } catch (error) {
       console.error(`Error fetching users with orphan role: ${error.message}`);
       throw new Error(`Error fetching users with orphan role: ${error.message}`);
     }
   }
+  
 
   async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
     const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
