@@ -13,6 +13,7 @@ import { CreateOrphanDto } from '../dto/create-orphan.dto';
 import { OrphanRemovalDto } from '../dto/orphan-request-removal.dto';
 import { OrphanService } from '../orphan.service';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
+import { Public } from 'src/common/constants/routes.constant';
 
 @ApiTags('orphan')
 @ApiBearerAuth()
@@ -50,7 +51,7 @@ export class OrphanController {
   async deleteOrphan(@Param('id') orphanId: string, @User('userId') userId: string): Promise<Orphan> {
     return this.orphanService.deleteOrphan(orphanId, userId);
   }
-
+ 
   @Get('orphans-stats')
   async getAllOrphansStats() {
     return this.orphanService.getAllOrphansStats();

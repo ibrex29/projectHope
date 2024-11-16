@@ -160,7 +160,15 @@ export class OrphanService {
           roles: { some: { roleName: UserType.ORPHAN } },
         },
         include: {
-          profile: true,
+          profile: {
+            include: {
+              localGovernment: {
+                include: {
+                  state: true, 
+                },
+              },
+            },
+          },
           Orphan: includeOrphanDetails,
         },
       });
