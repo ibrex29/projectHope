@@ -10,6 +10,7 @@ import { CreateRequestDto } from './dto/create-request.dto';
 import { DeleteStatus, Status } from 'src/common/types/status.type';
 import { RequestRemovalDto } from './dto/request-removal.dto';
 import { OrphanRemovalDto } from './dto/orphan-request-removal.dto';
+import { UpdateOrphanDto } from './dto/update-orphan.dto';
 
 @Injectable()
 export class OrphanService {
@@ -81,6 +82,87 @@ export class OrphanService {
 
     return { orphan, createdUser, profile };
   }
+
+  async updateProfile(
+    updateOrphanDto: UpdateOrphanDto,
+    userId: string,
+    localGovernmentId: string
+  ) {
+    return this.prisma.profile.update({
+      where: { userId }, 
+      data: {
+        firstName: updateOrphanDto.firstName ?? undefined,
+        middleName: updateOrphanDto.middleName ?? undefined,
+        lastName: updateOrphanDto.lastName ?? undefined,
+        localGovernment: {
+          connect: { id: localGovernmentId },
+        },
+        dateOfBirth: updateOrphanDto.dateOfBirth ?? undefined,
+        phoneNumber: updateOrphanDto.schoolContactPhone ?? undefined,
+        gender: updateOrphanDto.gender ?? undefined,
+        picture: updateOrphanDto.picture ?? undefined,
+      },
+    });
+  }
+  
+
+  async updateOrphanAccount(
+    orphanId: string,
+    updateOrphanDto: UpdateOrphanDto,
+    userId: string
+  ) {
+    // Step 1: Fetch the orphan to be updated
+    const orphan = await this.prisma.orphan.findUnique({
+      where: { id: orphanId },
+    });
+    
+    if (!orphan) {
+      throw new NotFoundException('Orphan account not found');
+    }
+  
+    // Step 2: Fetch the associated local government
+    const localGovernment = await this.prisma.localGovernment.findFirst({
+      where: { name: updateOrphanDto.localGovernment },
+    });
+    
+    if (!localGovernment) {
+      throw new ConflictException('Local government not found');
+    }
+  
+    // Step 3: Check if the orphan has an associated user profile
+    const user = await this.prisma.user.findUnique({
+      where: { id: orphan.userId },
+    });
+  
+    if (!user) {
+      throw new NotFoundException('User profile not found for this orphan');
+    }
+  
+    // Step 4: Update the user profile if necessary (e.g., updating profile details)
+    const updatedProfile = await this.updateProfile(
+      updateOrphanDto,
+      orphan.userId,
+      localGovernment.id
+    );
+  
+    // Step 5: Update orphan details
+    const updatedOrphan = await this.prisma.orphan.update({
+      where: { id: orphanId },
+      data: {
+        picture: updateOrphanDto.picture ?? orphan.picture,
+        affidavitOfGuardianship: updateOrphanDto.affidavitOfGuardianship ?? orphan.affidavitOfGuardianship,
+        schoolStatus: updateOrphanDto.isEnrolled ?? orphan.schoolStatus,
+        schoolName: updateOrphanDto.schoolName ?? orphan.schoolName,
+        schoolAddress: updateOrphanDto.schoolAddress ?? orphan.schoolAddress,
+        schoolContactPerson: updateOrphanDto.schoolContactPerson ?? orphan.schoolContactPerson,
+        schoolContactPhone: updateOrphanDto.schoolContactPhone ?? orphan.schoolContactPhone,
+        updatedByUserId: userId,
+      },
+    });
+  
+    return { updatedOrphan, updatedProfile };
+  }
+  
 
   async acceptOrphan(orphanId: string, userId: string): Promise<Orphan> {
     const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });

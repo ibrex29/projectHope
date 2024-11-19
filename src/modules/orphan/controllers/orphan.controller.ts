@@ -6,6 +6,9 @@ import {
   Param,
   UseGuards,
   Delete,
+  ParseUUIDPipe,
+  Patch,
+  Put,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Orphan,  } from '@prisma/client';
@@ -15,6 +18,7 @@ import { OrphanRemovalDto } from '../dto/orphan-request-removal.dto';
 import { OrphanService } from '../orphan.service';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
 import { Public } from 'src/common/constants/routes.constant';
+import { UpdateOrphanDto } from '../dto/update-orphan.dto';
 
 @ApiTags('orphan')
 @ApiBearerAuth()
@@ -25,6 +29,15 @@ export class OrphanController {
   @Post()
   async createOrphanAccount(@Body() dto: CreateOrphanDto,  @User('userId') userId: string) {
     return this.orphanService.createOrphanAccount(dto, userId);
+  }
+
+  @Put(':orphanId')
+  async updateOrphanAccount(
+    @Param('orphanId', ParseUUIDPipe) orphanId: string, 
+    @Body() updateOrphanDto: UpdateOrphanDto,
+    @User('userId') userId: string, 
+  ) {
+    return this.orphanService.updateOrphanAccount(orphanId, updateOrphanDto, userId);
   }
 
   @Post(':id/accept')
