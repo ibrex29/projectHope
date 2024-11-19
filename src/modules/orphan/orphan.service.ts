@@ -229,18 +229,18 @@ export class OrphanService {
 
   async orphanDeletionRequest(dto: OrphanRemovalDto, userId: string): Promise<Orphan> {
     if (!dto.orphanId) {
-      throw new Error("Request ID must be provided");
+      throw new Error("Orphan ID must be provided");
     }
   
-    const request = await this.prisma.orphan.findUnique({
+    const orphan = await this.prisma.orphan.findUnique({
       where: { id: dto.orphanId },
     });
   
-    if (!request) {
-      throw new NotFoundException(`Request with ID '${dto.orphanId}' not found`);
+    if (!orphan) {
+      throw new NotFoundException(`Orphan with ID '${dto.orphanId}' not found`);
     }
   
-    const updatedRequest = await this.prisma.orphan.update({
+    const updatedorphan = await this.prisma.orphan.update({
       where: { id: dto.orphanId },
       data: {
         isDeleted: DeleteStatus.REQUEST_DELETION,
@@ -249,7 +249,7 @@ export class OrphanService {
       },
     });
   
-    return updatedRequest;
+    return updatedorphan;
   }
   
 

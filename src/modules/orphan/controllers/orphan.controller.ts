@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Orphan,  } from '@prisma/client';
@@ -42,7 +43,7 @@ export class OrphanController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('deletion-request')
+  @Delete('deletion-request')
   async orphanDeletionRequest(@Body() dto: OrphanRemovalDto, @User('userId') userId: string): Promise<Orphan> {
     return this.orphanService.orphanDeletionRequest(dto, userId);
   }
