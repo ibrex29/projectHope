@@ -403,6 +403,92 @@ export class OrphanService {
       }
     }
 
+    async getOrphansWithDeletionRequests(): Promise<Orphan[]> {
+      return await this.prisma.orphan.findMany({
+        where: {
+          isDeleted: DeleteStatus.REQUEST_DELETION,
+        },
+        include: {
+          user: true,
+          createdBy: true,
+          updatedBy: true,
+        },
+      });
+    }
+
+    private async getTotalOrphansForGuardian(guardianId: string) {
+        const orphanCount = await this.prisma.orphan.count({
+          where: {
+            createdByUserId: guardianId,
+            isDeleted: DeleteStatus.NOT_DELETED,
+          },
+        });
+        return orphanCount;
+    }
+
+    private async getNeedsForGuardian(guardianId: string) {
+      const groupedNeeds = await this.prisma.need.groupBy({
+          by: ['name'],
+          _count: {
+              id: true,
+          },
+          where: {
+              request: {
+                  orphan: {
+                      createdByUserId: guardianId,
+                      isDeleted: DeleteStatus.NOT_DELETED,
+                  },
+              },
+          },
+      });
+  
+      return groupedNeeds.map((need) => ({
+          name: need.name,
+          count: need._count.id,
+      }));
+  }
+
+  private async getOrphanGenderCountForGuardian(guardianId: string) {
+    const orphans = await this.prisma.orphan.findMany({
+        where: {
+            createdByUserId: guardianId,
+            isDeleted: DeleteStatus.NOT_DELETED,
+        },
+        include: {
+            user: {
+                include: {
+                    profile: true,
+                },
+            },
+        },
+    });
+
+    const genderCounts: Record<string, number> = {};
+
+    orphans.forEach((orphan) => {
+        const gender = orphan.user.profile?.gender;
+        if (gender) {
+            genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+        }
+    });
+    return genderCounts;
+  }
+
+  // Public method to get all orphan stats for guardian
+  public async getOrphanStatsForGuardian(userId: string) {
+    const [orphanCount, needs, genderCounts] = await Promise.all([
+        this.getTotalOrphansForGuardian(userId),
+        this.getNeedsForGuardian(userId),
+        this.getOrphanGenderCountForGuardian(userId),
+    ]);
+
+    return {
+        orphanCount,
+        needs,
+        genderCounts,
+    };
+}
+
     private async getTotalOrphans() {
       return this.prisma.orphan.count({
         where: {
@@ -410,8 +496,6 @@ export class OrphanService {
         },
       });
     }
-
-
 
     private async getNeeds(){
       //Get all the needs related to requests of orphans that are not deleted, grouping by name

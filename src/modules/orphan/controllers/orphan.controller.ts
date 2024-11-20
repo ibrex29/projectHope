@@ -55,6 +55,16 @@ export class OrphanController {
     return this.orphanService.getAllOrphans();
   }
 
+  @Get('all-deletion-requests')
+  async getOrphansWithDeletionRequests() {
+    return this.orphanService.getOrphansWithDeletionRequests();
+  }
+  
+  @Get('orhpan-stats-for-guardian')
+  async getOrphanStatsForGuardian(@User('userId') userId: string) {
+    return this.orphanService.getOrphanStatsForGuardian(userId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Delete('deletion-request')
   async orphanDeletionRequest(@Body() dto: OrphanRemovalDto, @User('userId') userId: string): Promise<Orphan> {
