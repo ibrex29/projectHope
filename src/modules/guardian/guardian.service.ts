@@ -60,7 +60,7 @@ export class GuardianService {
             firstName: userDetails.profile.firstName,
             middleName: userDetails.profile.middleName || null,
             lastName: userDetails.profile.lastName,
-            // dateOfBirth: userDetails.profile.dateOfBirth,
+            dateOfBirth: userDetails.profile.dateOfBirth,
           },
         },
       },
@@ -135,24 +135,32 @@ export class GuardianService {
     }
   }
 
-  async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean }> {
+  async hasOrphans(guardianId: string): Promise<{ hasOrphans: boolean; hasProfile: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: guardianId },
       include: {
         roles: true,
+        profile: true, // Include profile information
       },
     });
   
     if (!user) {
       throw new Error(`User with ID ${guardianId} not found.`);
     }
-
+  
     const orphanCount = await this.prisma.orphan.count({
       where: { createdByUserId: guardianId },
     });
   
-    return { hasOrphans: orphanCount > 0 };
+    // Check if the user has profile information
+    const hasProfile = !!user.profile;
+  
+    return { 
+      hasOrphans: orphanCount > 0,
+      hasProfile, 
+    };
   }
+  
   
   async getTopGuardian(): Promise<{ name: string; email: string; profilePicture: string | null; orphanCount: number }[]> {
   const guardians = await this.prisma.user.findMany({
