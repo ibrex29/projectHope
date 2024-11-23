@@ -60,7 +60,7 @@ export class GuardianService {
             firstName: userDetails.profile.firstName,
             middleName: userDetails.profile.middleName || null,
             lastName: userDetails.profile.lastName,
-            dateOfBirth: userDetails.profile.dateOfBirth,
+            // dateOfBirth: userDetails.profile.dateOfBirth,
           },
         },
       },

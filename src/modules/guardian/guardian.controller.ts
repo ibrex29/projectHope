@@ -20,7 +20,7 @@ export class GuardianController {
   }
 
   // @Put(':id')
-  // async updateGuardian(@UserDecorator('userId') userId: string, @Body() updateGuardianDto: UpdateGuardianDto): Promise<User> {
+  // async updateGuardian(@User('userId') userId: string, @Body() updateGuardianDto: UpdateGuardianDto): Promise<User> {
   //   return this.guardianService.updateGuardian(userId, updateGuardianDto);
   // }
   

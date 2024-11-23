@@ -25,26 +25,36 @@ export class UsersService {
         email: userDetails.email,
       },
     });
-
+  
     if (user) {
       throw new UserAlreadyExistsException();
     }
-
+  
     const roleName = userDetails.role;
-
+  
     const role = await this.prisma.role.findUnique({
       where: {
         roleName,
       },
     });
-
+  
     if (!role) {
       throw new RoleNotFoundException(`Role '${roleName}' not found`);
     }
-
-    // Hash the password
+  
     const hashedPassword = await bcrypt.hash(userDetails.password, 10);
-
+  
+    const profileData = userDetails.profile
+      ? {
+          create: {
+            firstName: userDetails.profile.firstName,
+            middleName: userDetails.profile.middleName || null,
+            lastName: userDetails.profile.lastName,
+            dateOfBirth: userDetails.profile.dateOfBirth,
+          },
+        }
+      : undefined;
+  
     return this.prisma.user.create({
       data: {
         email: userDetails.email,
@@ -61,14 +71,7 @@ export class UsersService {
             },
           },
         },
-        profile: {
-          create: {
-            firstName: userDetails.profile.firstName,
-            middleName: userDetails.profile.middleName || null,
-            lastName: userDetails.profile.lastName,
-            dateOfBirth: userDetails.profile.dateOfBirth,
-          },
-        },
+        profile: profileData,
       },
     });
   }
