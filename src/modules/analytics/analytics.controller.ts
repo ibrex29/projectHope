@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Delete, Get, Param } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/common/constants/routes.constant';
@@ -20,6 +20,11 @@ export class AnalyticsController {
   @Get('counts')
   async getUserRolesCounts() {
     return this.analyticsService.countOrphansSponsorsAndGuardians();
+  }
+  
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.analyticsService.remove(+id);
   }
 }
 
@@ -63,9 +68,9 @@ export class AnalyticsController {
 //     return this.analyticsService.update(+id, updateAnalyticsDto);
 //   }
 
-//   @Delete(':id')
-//   remove(@Param('id') id: string) {
-//     return this.analyticsService.remove(+id);
-//   }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.analyticsService.remove(+id);
+  // }
 
 // }

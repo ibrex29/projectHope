@@ -3,6 +3,9 @@ import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class AnalyticsService {
+  remove(arg0: number) {
+    throw new Error('Method not implemented.');
+  }
   constructor(private prisma: PrismaService) {}
 
   // Method to count Orphans, Sponsors, and Guardians
@@ -108,9 +111,9 @@ export class AnalyticsService {
 //     return `This action updates a #${id} analytics`;
 //   }
 
-//   remove(id: number) {
-//     return `This action removes a #${id} analytics`;
-//   }
+  // remove(id: number) {
+  //   return `This action removes a #${id} analytics`;
+  // }
 
 //   async countOrphansSponsorsAndGuardians() {
 //     const [orphansCount, sponsorsCount, guardiansCount] = await Promise.all([
