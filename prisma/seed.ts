@@ -27,9 +27,10 @@ async function main() {
     },
     {
       roleName: 'Support',
-      description: 'The Support Department is dedicated to assisting users with any issues, questions, or requests related to our products or services.',
+      description:
+        'The Support Department is dedicated to assisting users with any issues, questions, or requests related to our products or services.',
       isActive: true,
-    }
+    },
   ];
 
   for (const role of roles) {
@@ -40,83 +41,152 @@ async function main() {
 
   console.log('Roles seeded successfully');
 
-  // Seed the state and local governments
+  // First, create a user
+  const user = await prisma.user.create({
+    data: {
+      email: '[email protected]',
+      password: 'Password123!',
+      roles: { connect: { roleName: 'admin' } },
+    },
+  });
+
+  console.log('User ID:', user.id);
+
+  // Then, create the state and connect it to the user
   const jigawaState = await prisma.state.create({
     data: {
       name: 'Jigawa',
-      createdBy: { connect: { id: 'system' } }, // Adjust as needed
-      updatedBy: { connect: { id: 'system' } }, // Adjust as needed
+      createdBy: { connect: { id: user.id } },
+      updatedBy: { connect: { id: user.id } },
       localGovernments: {
         create: [
-          { name: 'Hadejia', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Dutse', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Kazaure', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Gwaram', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Ringim', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
+          {
+            name: 'Hadejia',
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
+          {
+            name: 'Dutse',
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
+          {
+            name: 'Kazaure',
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
+          {
+            name: 'Gwaram',
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
+          {
+            name: 'Ringim',
+            createdBy: { connect: { id: user.id } },
+            updatedBy: { connect: { id: user.id } },
+          },
           // Add other local governments here
         ],
       },
     },
   });
 
-  console.log('Seeded state with local governments:', jigawaState);
+  console.log('State seeded successfully');
+
+  // Seed Users and Profiles
+  const guardian = await prisma.user.create({
+    data: {
+      email: 'guardian1@example.com',
+      password: 'Password123!',
+      roles: { connect: { roleName: 'guardian' } },
+      profile: {
+        create: {
+          firstName: 'John',
+          lastName: 'Guardian',
+          phoneNumber: '+2348012345678',
+          gender: 'MALE',
+        },
+      },
+    },
+  });
+
+  const sponsor = await prisma.user.create({
+    data: {
+      email: 'sponsor1@example.com',
+      password: 'Password123!',
+      roles: { connect: { roleName: 'sponsor' } },
+      profile: {
+        create: {
+          firstName: 'Jane',
+          lastName: 'Sponsor',
+          phoneNumber: '+2348012345679',
+          gender: 'FEMALE',
+        },
+      },
+    },
+  });
+
+  // Seed Orphans
+  const orphan = await prisma.orphan.create({
+    data: {
+      trackingNumber: 'ORPH-001',
+      isAccepted: true,
+      affidavitOfGuardianship: 'https://example.com/affidavit.pdf',
+      user: {
+        create: {
+          email: 'orphan1@example.com',
+          password: 'Password123!',
+          profile: {
+            create: {
+              firstName: 'Tom',
+              lastName: 'Orphan',
+              phoneNumber: '+2348012345680',
+              gender: 'MALE',
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Seed Requests
+  const request = await prisma.request.create({
+    data: {
+      status: 'Pending',
+      description: 'Request for school fees sponsorship',
+      orphan: { connect: { id: orphan.id } },
+      user: { connect: { id: guardian.id } },
+    },
+  });
+
+  // Seed Needs
+  await prisma.need.create({
+    data: {
+      name: 'School Fees',
+      description: 'Tuition fees for the academic year',
+      request: { connect: { id: request.id } },
+    },
+  });
+
+  // Seed Donations (Sponsorships Gotten)
+  await prisma.donation.create({
+    data: {
+      amountNeeded: 500.0,
+      amountRecieved: 300.0,
+      amountDonated: 300.0,
+      request: { connect: { id: request.id } },
+      user: { connect: { id: sponsor.id } },
+    },
+  });
+
+  console.log('Mock data for dashboard metrics seeded successfully!');
 }
 
 main()
-  .catch(e => {
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
   });
-  
-/*import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
-const saltRounds = 10; // Adjust as needed
-
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, saltRounds);
-}
-
-async function main() {
-    const adminUser = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          password: 'securepassword', // Ensure you use hashed passwords in real scenarios
-          isActive: true,
-          authStrategy: 'local',
-        },
-      });
-
-  // Seed the state and local governments
-  const jigawaState = await prisma.state.create({
-    data: {
-      name: 'Jigawa',
-      createdBy: { connect: { id: adminUser.id } }, // Link to created admin user
-      updatedBy: { connect: { id: adminUser.id } }, // Link to created admin user
-      localGovernments: {
-        create: [
-          { name: 'Hadejia', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Dutse', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          // Add other local governments here
-        ],
-      },
-    },
-  });
-
-  console.log('Seeded state:', jigawaState);
-}
-
-main()
-  .catch(e => {
-    throw e;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });*/
