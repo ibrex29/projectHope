@@ -58,10 +58,10 @@ export class AnalyticsController {
 //     return this.analyticsService.countOrphansSponsorsAndGuardians();
 //   }
 
-//   @Get(':id')
-//   findOne(@Param('id') id: string) {
-//     return this.analyticsService.findOne(+id);
-//   }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.analyticsService.findOne(+id);
+  // }
 
 //   @Patch(':id')
 //   update(@Param('id') id: string, @Body() updateAnalyticsDto: UpdateAnalyticsDto) {

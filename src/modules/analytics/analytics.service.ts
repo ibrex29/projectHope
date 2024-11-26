@@ -103,9 +103,9 @@ export class AnalyticsService {
 //     return `This action returns all analytics`;
 //   }
 
-//   findOne(id: number) {
-//     return `This action returns a #${id} analytics`;
-//   }
+  // findOne(id: number) {
+  //   return `This action returns a #${id} analytics`;
+  // }
 
 //   update(id: number, updateAnalyticsDto: UpdateAnalyticsDto) {
 //     return `This action updates a #${id} analytics`;
