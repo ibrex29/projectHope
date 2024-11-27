@@ -212,7 +212,19 @@ export class OrphanService {
           },
           createdBy: true,
           updatedBy: true,
-          user: true, 
+          user: {
+            include: {
+              profile: {
+                include: {
+                  localGovernment: {
+                    include: {
+                      state: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
     } catch (error) {
