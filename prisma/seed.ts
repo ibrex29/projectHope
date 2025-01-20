@@ -1,8 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import argon2 from 'argon2';
 
 const prisma = new PrismaClient();
-const saltRounds = 10; // Adjust as needed
+
+async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password);  // Hash password using argon2
+}
 
 async function main() {
   // Seed Roles
@@ -42,18 +45,18 @@ async function main() {
 
   console.log('Roles seeded successfully');
 
-  // Seed the admin user with hashed password
-  const hashedPassword = bcrypt.hashSync('securepassword', saltRounds); // Hashing the password synchronously
+  // Seed Users with hashed passwords
+  const adminPassword = await hashPassword('securepassword');  // Hash the password
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@example.com',
-      password: hashedPassword, // Store hashed password
+      password: adminPassword,  // Store the hashed password
       isActive: true,
       authStrategy: 'local',
     },
   });
 
-  console.log('Admin user seeded successfully');
+  console.log('Admin user seeded:', adminUser);
 
   // Seed the state and local governments
   const jigawaState = await prisma.state.create({
@@ -67,21 +70,4 @@ async function main() {
           { name: 'Dutse', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          // Add other local governments here
-        ],
-      },
-    },
-  });
-
-  console.log('Seeded state with local governments:', jigawaState);
-}
-
-main()
-  .catch(e => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+          { name: 'Ringim', createdBy: { connect: { id: admin
