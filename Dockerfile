@@ -9,7 +9,7 @@ RUN apk add --no-cache \
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies
+# Copy package files first and install dependencies
 COPY package.json yarn.lock ./
 RUN yarn install
 
@@ -17,17 +17,24 @@ RUN yarn install
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy the source code
+# Now, copy the rest of the application source code
 COPY . .
 
 # Run the build to compile TypeScript code into JavaScript
 RUN yarn build
 
-# Check if dist/src/main.js exists
-RUN if [ ! -f /usr/src/app/dist/src/main.js ]; then echo "Error: dist/src/main.js not found"; exit 1; fi
-
 # Expose the port the app will run on
 EXPOSE 8000
 
-# Start the application (Ensure dist/src/main.js exists)
-CMD ["node", "/usr/src/app/dist/src/main.js"]
+# Add a custom script to handle migrations and start the application
+RUN echo '#!/bin/sh \n\
+  # Run migrations at runtime\n\
+  npx prisma migrate deploy\n\
+  # Start the application\n\
+  node /usr/src/app/dist/src/main.js' > /usr/src/app/start.sh
+
+# Make the script executable
+RUN chmod +x /usr/src/app/start.sh
+
+# Start the application using the custom script
+CMD ["/usr/src/app/start.sh"]
