@@ -1,9 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
-import * as compression from 'compression';
 import { VersioningType } from '@nestjs/common';
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as compression from 'compression';
+import { AppModule } from './app.module';
 
 const corsOptions: CorsOptions = {
   origin: true,
@@ -16,7 +16,7 @@ async function bootstrap() {
   app.use(compression()); // use compression to improve speed
   app.enableCors(corsOptions);
   app.setGlobalPrefix('api');
-  
+
   // Enable versioning
   app.enableVersioning({
     type: VersioningType.URI,
@@ -26,11 +26,11 @@ async function bootstrap() {
     .setTitle('Hope API')
     .setDescription('The Hope API description')
     .setVersion('1.0')
-    .addBearerAuth() 
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3002);
+  await app.listen(8000);
 }
 bootstrap();
