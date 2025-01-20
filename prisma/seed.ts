@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';  // Use bcryptjs if bcrypt is not working as expected
 
 const prisma = new PrismaClient();
 const saltRounds = 10;
 
 async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, saltRounds);
+  return bcrypt.hash(password, saltRounds);  // Make sure to use bcryptjs here
 }
 
 async function main() {
