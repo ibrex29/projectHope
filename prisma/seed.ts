@@ -1,23 +1,20 @@
 import { PrismaClient } from '@prisma/client';
-import argon2 from 'argon2';
 
 const prisma = new PrismaClient();
-
-async function hashPassword(password: string): Promise<string> {
-  return await argon2.hash(password); // Properly hash the password with await
-}
 
 async function main() {
   // Seed Roles
   const roles = [
     {
       roleName: 'admin',
-      description: 'Has full access to all resources and can manage other users.',
+      description:
+        'Has full access to all resources and can manage other users.',
       isActive: true,
     },
     {
       roleName: 'guardian',
-      description: 'Responsible for managing orphans and monitoring their activities.',
+      description:
+        'Responsible for managing orphans and monitoring their activities.',
       isActive: true,
     },
     {
@@ -32,7 +29,8 @@ async function main() {
     },
     {
       roleName: 'Support',
-      description: 'The Support Department is dedicated to assisting users with any issues, questions, or requests related to our products or services.',
+      description:
+        'The Support Department is dedicated to assisting users with any issues, questions, or requests related to our products or services.',
       isActive: true,
     },
   ];
@@ -45,17 +43,16 @@ async function main() {
 
   console.log('Roles seeded successfully');
 
-  // Create an admin user
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@example.com',
-      password: await hashPassword('securepassword'), // Hash the admin password
+      password: 'password',
       isActive: true,
       authStrategy: 'local',
     },
   });
 
-  console.log('Admin user seeded:', adminUser);
+  console.log('Admin user seeded successfully');
 
   // Seed the state and local governments
   const jigawaState = await prisma.state.create({
@@ -65,11 +62,31 @@ async function main() {
       updatedBy: { connect: { id: adminUser.id } }, // Link to created admin user
       localGovernments: {
         create: [
-          { name: 'Hadejia', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Dutse', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
+          {
+            name: 'Hadejia',
+            createdBy: { connect: { id: adminUser.id } },
+            updatedBy: { connect: { id: adminUser.id } },
+          },
+          {
+            name: 'Dutse',
+            createdBy: { connect: { id: adminUser.id } },
+            updatedBy: { connect: { id: adminUser.id } },
+          },
+          {
+            name: 'Kazaure',
+            createdBy: { connect: { id: adminUser.id } },
+            updatedBy: { connect: { id: adminUser.id } },
+          },
+          {
+            name: 'Gwaram',
+            createdBy: { connect: { id: adminUser.id } },
+            updatedBy: { connect: { id: adminUser.id } },
+          },
+          {
+            name: 'Ringim',
+            createdBy: { connect: { id: adminUser.id } },
+            updatedBy: { connect: { id: adminUser.id } },
+          },
           // Add other local governments here
         ],
       },
@@ -81,7 +98,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Error seeding database:', e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
