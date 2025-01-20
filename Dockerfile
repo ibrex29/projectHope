@@ -15,11 +15,11 @@ RUN npx prisma generate
 # Copy the source code
 COPY . .
 
-# Build the NestJS app
+# Build the NestJS app (compiles TypeScript to JavaScript)
 RUN yarn build
 
 # Expose the port the app will run on
-EXPOSE 3000
+EXPOSE 3002
 
 # Start the application
 CMD ["yarn", "start:prod"]
