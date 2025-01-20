@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package.json yarn.lock ./
-RUN yarn install
+RUN yarn install --production
 
 # Copy Prisma schema and generate Prisma client
 COPY prisma ./prisma
@@ -20,8 +20,8 @@ RUN yarn prisma:generate
 # Copy the source code
 COPY . .
 
-# Run the Prisma migrate command
-RUN yarn prisma:migrate
+# Run Prisma migration (without exposing the DATABASE_URL in the Dockerfile)
+RUN npx prisma migrate deploy
 
 # Run the build to compile TypeScript code into JavaScript
 RUN yarn build
