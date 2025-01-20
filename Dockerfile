@@ -1,6 +1,11 @@
 # Use the official Node.js image
 FROM node:18-alpine
 
+# Install required dependencies (including libssl1.1)
+RUN apk add --no-cache \
+  openssl1.1-compat \
+  libc6-compat
+
 # Set the working directory
 WORKDIR /usr/src/app
 
