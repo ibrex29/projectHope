@@ -4,9 +4,12 @@ FROM node:18-alpine
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies using Yarn
+# Install dependencies
 COPY package.json yarn.lock ./
 RUN yarn install
+
+# Ensure Prisma client is generated
+RUN npx prisma generate
 
 # Copy the source code
 COPY . .
