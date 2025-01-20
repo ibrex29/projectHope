@@ -1,7 +1,13 @@
 #!/bin/sh
 
-# Run Prisma migration at runtime
-npx prisma migrate deploy
+# Run database migrations (optional)
+echo "Running database migrations..."
+yarn prisma migrate deploy
+
+# Seed the database
+echo "Seeding the database..."
+yarn seed
 
 # Start the application
-exec node dist/src/main.js
+echo "Starting the application..."
+yarn start
