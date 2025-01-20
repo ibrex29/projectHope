@@ -17,6 +17,9 @@ RUN yarn install
 COPY prisma ./prisma
 RUN yarn prisma:generate
 
+# Seed the database with initial records
+RUN yarn seed
+
 # Copy the source code
 COPY . .
 
