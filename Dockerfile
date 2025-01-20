@@ -18,8 +18,11 @@ COPY . .
 # Build the NestJS app (compiles TypeScript to JavaScript)
 RUN yarn build
 
+# Ensure dist folder and main.js exists
+RUN ls -al dist
+
 # Expose the port the app will run on
 EXPOSE 3000
 
-# Start the application
-CMD ["yarn", "start:prod"]
+# Start the application (Ensure dist/main.js exists)
+CMD ["node", "dist/main"]
