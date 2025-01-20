@@ -9,9 +9,12 @@ RUN apk add --no-cache \
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies
+# Copy package files and install dependencies (including the NestJS CLI)
 COPY package.json yarn.lock ./
-RUN yarn install --production
+RUN yarn install
+
+# Install NestJS CLI globally
+RUN yarn global add @nestjs/cli
 
 # Copy Prisma schema and generate Prisma client
 COPY prisma ./prisma
@@ -19,6 +22,9 @@ RUN yarn prisma:generate
 
 # Copy the source code
 COPY . .
+
+# Run Prisma migration at runtime (via start.sh script)
+RUN npx prisma migrate deploy --schema ./prisma/schema.prisma
 
 # Run the build to compile TypeScript code into JavaScript
 RUN yarn build
