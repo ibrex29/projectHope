@@ -19,7 +19,7 @@ COPY . .
 RUN yarn build
 
 # Expose the port the app will run on
-EXPOSE 3002
+EXPOSE 3000
 
 # Start the application
 CMD ["yarn", "start:prod"]
