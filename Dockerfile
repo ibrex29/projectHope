@@ -10,12 +10,15 @@ RUN apk add --no-cache \
 WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock ./ 
 RUN yarn install
 
 # Copy Prisma schema and generate Prisma client
 COPY prisma ./prisma
 RUN npx prisma generate
+
+# Run migrations (use 'migrate deploy' for production environment)
+RUN npx prisma migrate deploy
 
 # Copy the source code
 COPY . .
