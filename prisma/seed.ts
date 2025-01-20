@@ -1,9 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
+const saltRounds = 10; // Adjust as needed
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, saltRounds);
+}
 
 async function main() {
   // Seed Roles
+  console.log('Seeding roles...');
   const roles = [
     {
       roleName: 'admin',
@@ -27,76 +34,36 @@ async function main() {
     },
     {
       roleName: 'Support',
-      description: 'The Support Department is dedicated to assisting users with any issues, questions, or requests related to our products or services.',
+      description: 'The Support Department assists users with issues related to our services.',
       isActive: true,
-    }
+    },
   ];
 
   for (const role of roles) {
-    await prisma.role.create({
-      data: role,
-    });
+    await prisma.role.create({ data: role });
   }
+  console.log('Roles seeded successfully.');
 
-  console.log('Roles seeded successfully');
-
-  // Seed the state and local governments
-  const jigawaState = await prisma.state.create({
+  // Seed Admin User
+  console.log('Seeding admin user...');
+  const adminPassword = await hashPassword('securepassword');
+  const adminUser = await prisma.user.create({
     data: {
-      name: 'Jigawa',
-      createdBy: { connect: { id: 'system' } }, // Adjust as needed
-      updatedBy: { connect: { id: 'system' } }, // Adjust as needed
-      localGovernments: {
-        create: [
-          { name: 'Hadejia', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Dutse', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Kazaure', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Gwaram', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          { name: 'Ringim', createdBy: { connect: { id: 'system' } }, updatedBy: { connect: { id: 'system' } } },
-          // Add other local governments here
-        ],
-      },
+      email: 'admin@example.com',
+      password: adminPassword,
+      isActive: true,
+      authStrategy: 'local',
     },
   });
+  console.log('Admin user seeded successfully.');
 
-  console.log('Seeded state with local governments:', jigawaState);
-}
-
-main()
-  .catch(e => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-  
-/*import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
-const saltRounds = 10; // Adjust as needed
-
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, saltRounds);
-}
-
-async function main() {
-    const adminUser = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          password: 'securepassword', // Ensure you use hashed passwords in real scenarios
-          isActive: true,
-          authStrategy: 'local',
-        },
-      });
-
-  // Seed the state and local governments
+  // Seed State and Local Governments
+  console.log('Seeding states and local governments...');
   const jigawaState = await prisma.state.create({
     data: {
       name: 'Jigawa',
-      createdBy: { connect: { id: adminUser.id } }, // Link to created admin user
-      updatedBy: { connect: { id: adminUser.id } }, // Link to created admin user
+      createdBy: { connect: { id: adminUser.id } },
+      updatedBy: { connect: { id: adminUser.id } },
       localGovernments: {
         create: [
           { name: 'Hadejia', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
@@ -104,19 +71,18 @@ async function main() {
           { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          // Add other local governments here
         ],
       },
     },
   });
-
-  console.log('Seeded state:', jigawaState);
+  console.log('State and local governments seeded successfully:', jigawaState);
 }
 
 main()
-  .catch(e => {
-    throw e;
+  .catch((e) => {
+    console.error('Error seeding database:', e);
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
-  });*/
+  });
