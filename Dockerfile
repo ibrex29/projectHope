@@ -20,8 +20,8 @@ RUN yarn prisma:generate
 # Copy the source code
 COPY . .
 
-# Run Prisma migration (without exposing the DATABASE_URL in the Dockerfile)
-RUN npx prisma migrate deploy
+# Set DATABASE_URL explicitly for the Prisma migration command (you can also export it dynamically at runtime)
+RUN npx prisma migrate deploy --schema ./prisma/schema.prisma
 
 # Run the build to compile TypeScript code into JavaScript
 RUN yarn build
