@@ -1,12 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';  // Use bcryptjs if bcrypt is not working as expected
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
-const saltRounds = 10;
-
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, saltRounds);  // Make sure to use bcryptjs here
-}
+const saltRounds = 10; // Adjust as needed
 
 async function main() {
   // Seed Roles
@@ -38,7 +34,6 @@ async function main() {
     }
   ];
 
-  // Create roles in the database
   for (const role of roles) {
     await prisma.role.create({
       data: role,
@@ -47,25 +42,25 @@ async function main() {
 
   console.log('Roles seeded successfully');
 
-  // Seed an admin user with a hashed password
-  const hashedPassword = await hashPassword('securepassword');  // Hash the password
+  // Seed the admin user with hashed password
+  const hashedPassword = bcrypt.hashSync('securepassword', saltRounds); // Hashing the password synchronously
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@example.com',
-      password: hashedPassword,
+      password: hashedPassword, // Store hashed password
       isActive: true,
       authStrategy: 'local',
     },
   });
 
-  console.log('Admin user created with hashed password:', adminUser);
+  console.log('Admin user seeded successfully');
 
   // Seed the state and local governments
   const jigawaState = await prisma.state.create({
     data: {
       name: 'Jigawa',
-      createdBy: { connect: { id: adminUser.id } },  // Connect to the admin user
-      updatedBy: { connect: { id: adminUser.id } },
+      createdBy: { connect: { id: adminUser.id } }, // Link to created admin user
+      updatedBy: { connect: { id: adminUser.id } }, // Link to created admin user
       localGovernments: {
         create: [
           { name: 'Hadejia', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
@@ -73,7 +68,7 @@ async function main() {
           { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
           { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          // Add other local governments here if needed
+          // Add other local governments here
         ],
       },
     },
