@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Reset the database (for development only)
-echo "Resetting the database..."
-yarn prisma migrate reset --force --skip-seed
+# echo "Resetting the database..."
+# yarn prisma migrate reset --force --skip-seed
 
 # Run database migrations (optional)
 echo "Running database migrations..."
