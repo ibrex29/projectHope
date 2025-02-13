@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { SponsorshipRequest, User } from '@prisma/client';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
@@ -233,18 +233,55 @@ async create(dto: CreateSponsorshipRequestDto, userId: string) {
 
 
 async update(id: string, dto: UpdateSponsorshipRequestDto) {
-  const existingRequest = await this.prisma.sponsorshipRequest.findUnique({ where: { id } });
+  return await this.prisma.$transaction(async (tx) => {
+    const existingRequest = await tx.sponsorshipRequest.findUnique({ 
+      where: { id },
+      include: { SupportingDocument: true }
+    });
 
-  if (!existingRequest) throw new NotFoundException('Sponsorship request not found');
+    if (!existingRequest){
+      throw new NotFoundException('Sponsorship request not found');
+    } 
 
-  return this.prisma.sponsorshipRequest.update({
-    where: { id },
-    data: {
-      ...dto,
-      orphans: dto.orphans ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) } : undefined,
-    },
+    if (existingRequest.status !== SponsorshipStatus.DRAFT) {
+      throw new BadRequestException('Only draft sponsorship requests can be updated');
+    }
+
+    // Handle supporting document updates
+    if (dto.supportingDocuments && dto.supportingDocuments.length > 0) {
+      // Delete existing documents
+      await tx.supportingDocument.deleteMany({
+        where: { sponsorshipRequestId: id }
+      });
+
+      // Add new documents
+      await tx.supportingDocument.createMany({
+        data: dto.supportingDocuments.map((doc) => ({
+          sponsorshipRequestId: id,
+          filename: doc.filename,
+          fileUrl: doc.fileUrl,
+          fileType: doc.fileType,
+        })),
+      });
+    }
+
+    // Update sponsorship request
+    return await tx.sponsorshipRequest.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        targetAmount: dto.targetAmount,
+        deadline: dto.deadline,
+        orphans: dto.orphans ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) } : undefined,
+      },
+      include: {
+        SupportingDocument: true, // Return updated documents
+      },
+    });
   });
 }
+
 
 async approveSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
   return await this.prisma.sponsorshipRequest.update({
@@ -334,4 +371,31 @@ async getSponsorshipRequestById(id: string) {
   });
 }
 
+async deleteDraftRequest(requestId: string): Promise<{ message: string; requestId: string }> {
+  return await this.prisma.$transaction(async (tx) => {
+    // Check if the request exists and is in draft status
+    const request = await tx.sponsorshipRequest.findUnique({
+      where: { id: requestId },
+      select: { id: true, status: true }
+    });
+
+    if (!request || request.status !== SponsorshipStatus.DRAFT) {
+      throw new NotFoundException('Request not found or is not in draft status');
+    }
+
+    // Delete related records in parallel for efficiency
+    await Promise.all([
+      tx.supportingDocument.deleteMany({ where: { sponsorshipRequestId: requestId } }),
+      tx.actionLog.deleteMany({ where: { sponsorshipRequestId: requestId } }),
+    ]);
+
+    // Delete the SponsorshipRequest
+    await tx.sponsorshipRequest.delete({ where: { id: requestId } });
+
+    return {
+      message: 'Sponsorship request and all related documents have been successfully deleted.',
+      requestId,
+    };
+  });
+}
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Patch, Query, UseGuards} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Patch, Query, UseGuards, Delete} from '@nestjs/common';
 import { GuardianService } from './guardian.service';
 import { ApiBearerAuth, ApiResponse, ApiTags,ApiOperation } from '@nestjs/swagger';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
@@ -102,6 +102,12 @@ export class SponsorshipController {
   @ApiOperation({ summary: 'Retrieve a sponsorship request by ID' })
   async getById(@Param('id') id: string) {
     return this.guardianService.getSponsorshipRequestById(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete draft requests' })
+  async deleteDraftRequest(@Param('id') id:string){
+    return this.guardianService.deleteDraftRequest(id);
   }
 }
 
