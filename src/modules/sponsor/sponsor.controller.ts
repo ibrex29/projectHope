@@ -17,14 +17,14 @@ export class SponsorController {
     return this.sponsorService.createDonationByRequest(updateDonationDto,userId);
   }
 
-  @Get()
-  async getAllSponsor(){
-    return this.sponsorService.getAllSponsors();
-  }
+  // @Get()
+  // async getAllSponsor(){
+  //   return this.sponsorService.getAllSponsors();
+  // }
 
-  @Get('my-donation')
-  async getDonationsByUser(@User('userId') userId: string) {
-    return this.sponsorService.getDonationsAndRequestsByUser(userId);
-  }
+  // @Get('my-donation')
+  // async getDonationsByUser(@User('userId') userId: string) {
+  //   return this.sponsorService.getDonationsAndRequestsByUser(userId);
+  // }
 
 }

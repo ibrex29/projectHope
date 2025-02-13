@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { GuardianService } from './guardian.service';
-import { GuardianController } from './guardian.controller';
+import { GuardianController, SponsorshipController } from './guardian.controller';
 
 @Module({
-  controllers: [GuardianController],
+  controllers: [GuardianController,SponsorshipController],
   providers: [GuardianService],
 })
 export class GuardianModule {}

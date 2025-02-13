@@ -204,12 +204,12 @@ export class OrphanService {
           createdByUserId: userId, 
         },
         include: {
-          requests: {
-            include: {
-              donations: true, 
-              needs: true,  
-            },
-          },
+          // requests: {
+          //   include: {
+          //     // donations: true, 
+          //     // needs: true,  
+          //   },
+          // },
           createdBy: true,
           updatedBy: true,
           user: {
@@ -252,12 +252,12 @@ export class OrphanService {
           },
           Orphan: {
             include: {
-              requests: {
-                include: {
-                  donations: true,
-                  needs: true,
-                },
-              },
+              // requests: {
+              //   include: {
+              //     // donations: true,
+              //     // needs: true,
+              //   },
+              // },
               createdBy: true,
               updatedBy: true,
             },
@@ -276,50 +276,50 @@ export class OrphanService {
   }
   
 
-  async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
-    const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
+  // async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
+  //   const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
   
-    // Check if the orphan exists
-    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
-    if (!orphan) {
-      throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
-    }
+  //   // Check if the orphan exists
+  //   const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
+  //   if (!orphan) {
+  //     throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
+  //   }
   
-    const needData = needs?.map(need => ({
-      name: need.name,
-      description: need.description,
-      additionalInfo: need.additionalInfo,
-      supportiveDocuments: need.supportiveDocuments,
-    })) || [];
+  //   const needData = needs?.map(need => ({
+  //     name: need.name,
+  //     description: need.description,
+  //     additionalInfo: need.additionalInfo,
+  //     supportiveDocuments: need.supportiveDocuments,
+  //   })) || [];
   
-    // Create the request
-    const request = await this.prisma.request.create({
-      data: {
-        description,
-        orphanId,
-        createdByUserId: userId,
-        userId: userId,
-        status: Status.PENDING,
-        isDeleted:DeleteStatus.NOT_DELETED,
-        needs: {
-          create: needData,
-        },
-        donations: {
-          create: { 
-            amountNeeded: amountNeeded , 
-            userId: orphan.userId,
-            amountRecieved:amountRecieved 
-          },
-        },
-      },
-      include: {
-        needs: true,
-        donations: true,
-      },
-    });
+  //   // Create the request
+  //   const request = await this.prisma.request.create({
+  //     data: {
+  //       description,
+  //       orphanId,
+  //       createdByUserId: userId,
+  //       userId: userId,
+  //       status: Status.PENDING,
+  //       isDeleted:DeleteStatus.NOT_DELETED,
+  //       needs: {
+  //         create: needData,
+  //       },
+  //       donations: {
+  //         create: { 
+  //           amountNeeded: amountNeeded , 
+  //           userId: orphan.userId,
+  //           amountRecieved:amountRecieved 
+  //         },
+  //       },
+  //     },
+  //     include: {
+  //       needs: true,
+  //       donations: true,
+  //     },
+  //   });
   
-    return request;
-  }
+  //   return request;
+  // }
 
   async orphanDeletionRequest(dto: OrphanRemovalDto, userId: string): Promise<Orphan> {
     if (!dto.orphanId) {
@@ -391,29 +391,29 @@ export class OrphanService {
       });
     }
 
-    async listAllRequests() {
-      try {
-        const requests = await this.prisma.request.findMany({
-          where: {
-            isDeleted: DeleteStatus.REQUEST_DELETION,          },
-          include: {
-            orphan: true,       
-            donations: true,   
-            needs: true,      
-            user: {
-              select:{
-                profile:true,
-              }
-            },        
-            createdBy: true,    
-            updatedBy: true,    
-          },
-        });
-        return requests;
-      } catch (error) {
-        throw new Error(`Failed to list all requests: ${error.message}`);
-      }
-    }
+    // async listAllRequests() {
+    //   try {
+    //     const requests = await this.prisma.request.findMany({
+    //       where: {
+    //         isDeleted: DeleteStatus.REQUEST_DELETION,          },
+    //       include: {
+    //         // orphan: true,       
+    //         // donations: true,   
+    //         // needs: true,      
+    //         user: {
+    //           select:{
+    //             profile:true,
+    //           }
+    //         },        
+    //         createdBy: true,    
+    //         updatedBy: true,    
+    //       },
+    //     });
+    //     return requests;
+    //   } catch (error) {
+    //     throw new Error(`Failed to list all requests: ${error.message}`);
+    //   }
+    // }
 
     async getOrphansWithDeletionRequests(): Promise<Orphan[]> {
       return await this.prisma.orphan.findMany({
@@ -438,27 +438,27 @@ export class OrphanService {
         return orphanCount;
     }
 
-    private async getNeedsForGuardian(guardianId: string) {
-      const groupedNeeds = await this.prisma.need.groupBy({
-          by: ['name'],
-          _count: {
-              id: true,
-          },
-          where: {
-              request: {
-                  orphan: {
-                      createdByUserId: guardianId,
-                      isDeleted: DeleteStatus.NOT_DELETED,
-                  },
-              },
-          },
-      });
+  //   private async getNeedsForGuardian(guardianId: string) {
+  //     const groupedNeeds = await this.prisma.need.groupBy({
+  //         by: ['name'],
+  //         _count: {
+  //             id: true,
+  //         },
+  //         where: {
+  //             request: {
+  //                 orphan: {
+  //                     createdByUserId: guardianId,
+  //                     isDeleted: DeleteStatus.NOT_DELETED,
+  //                 },
+  //             },
+  //         },
+  //     });
   
-      return groupedNeeds.map((need) => ({
-          name: need.name,
-          count: need._count.id,
-      }));
-  }
+  //     return groupedNeeds.map((need) => ({
+  //         name: need.name,
+  //         count: need._count.id,
+  //     }));
+  // }
 
   private async getOrphanGenderCountForGuardian(guardianId: string) {
     const orphans = await this.prisma.orphan.findMany({
@@ -486,89 +486,89 @@ export class OrphanService {
     return genderCounts;
   }
 
-  // Public method to get all orphan stats for guardian
-  public async getOrphanStatsForGuardian(userId: string) {
-    const [orphanCount, needs, genderCounts] = await Promise.all([
-        this.getTotalOrphansForGuardian(userId),
-        this.getNeedsForGuardian(userId),
-        this.getOrphanGenderCountForGuardian(userId),
-    ]);
+//   // Public method to get all orphan stats for guardian
+//   public async getOrphanStatsForGuardian(userId: string) {
+//     const [orphanCount, needs, genderCounts] = await Promise.all([
+//         this.getTotalOrphansForGuardian(userId),
+//         // this.getNeedsForGuardian(userId),
+//         this.getOrphanGenderCountForGuardian(userId),
+//     ]);
 
-    return {
-        orphanCount,
-        needs,
-        genderCounts,
-    };
-}
+//     return {
+//         orphanCount,
+//         needs,
+//         genderCounts,
+//     };
+// }
 
-    private async getTotalOrphans() {
-      return this.prisma.orphan.count({
-        where: {
-          isDeleted: DeleteStatus.NOT_DELETED,
-        },
-      });
-    }
+    // private async getTotalOrphans() {
+    //   return this.prisma.orphan.count({
+    //     where: {
+    //       isDeleted: DeleteStatus.NOT_DELETED,
+    //     },
+    //   });
+    // }
 
-    private async getNeeds(){
-      //Get all the needs related to requests of orphans that are not deleted, grouping by name
-      const groupedNeeds = await this.prisma.need.groupBy({
-        by: ['name'],
-        _count: {
-          id: true,
-        },
-        _max: {
-          updatedAt: true,  // Get the latest updatedAt for each group
-        },
-        where: {
-          request: {
-            orphan: {
-              isDeleted: DeleteStatus.NOT_DELETED,
-            },
-          },
-        },
-        orderBy: {
-          _max: {
-            updatedAt: 'desc',  // Order by the latest updatedAt date within each group
-          },
-        },
-      });
+    // private async getNeeds(){
+    //   //Get all the needs related to requests of orphans that are not deleted, grouping by name
+    //   const groupedNeeds = await this.prisma.need.groupBy({
+    //     by: ['name'],
+    //     _count: {
+    //       id: true,
+    //     },
+    //     _max: {
+    //       updatedAt: true,  // Get the latest updatedAt for each group
+    //     },
+    //     where: {
+    //       request: {
+    //         orphan: {
+    //           isDeleted: DeleteStatus.NOT_DELETED,
+    //         },
+    //       },
+    //     },
+    //     orderBy: {
+    //       _max: {
+    //         updatedAt: 'desc',  // Order by the latest updatedAt date within each group
+    //       },
+    //     },
+    //   });
 
-      // Fetch the associated donations and calculate the total amountNeeded and amountRecieved per need.
-      const needsWithAmountNeeded = await Promise.all(groupedNeeds.map(async (need) => {
-        const donations = await this.prisma.donation.findMany({
-          where: {
-            requestId: {
-              in: await this.prisma.need.findMany({
-                where: {
-                  name: need.name,
-                },
-                select: {
-                  requestId: true,
-                },
-              }).then((needs) => needs.map((n) => n.requestId)),
-            },
-          },
-          select: {
-            amountNeeded: true,
-            amountRecieved: true,
-          },
-        });
+    //   // Fetch the associated donations and calculate the total amountNeeded and amountRecieved per need.
+    //   const needsWithAmountNeeded = await Promise.all(groupedNeeds.map(async (need) => {
+    //     const donations = await this.prisma.donation.findMany({
+    //       where: {
+    //         requestId: {
+    //           in: await this.prisma.need.findMany({
+    //             where: {
+    //               name: need.name,
+    //             },
+    //             select: {
+    //               requestId: true,
+    //             },
+    //           }).then((needs) => needs.map((n) => n.requestId)),
+    //         },
+    //       },
+    //       select: {
+    //         amountNeeded: true,
+    //         amountRecieved: true,
+    //       },
+    //     });
       
-      const totalAmountNeeded = donations.reduce((sum, donation) => sum + donation.amountNeeded, 0);
-      const totalAmountRecieved = donations.reduce((sum, donation) => sum + donation.amountRecieved, 0);
+    //   const totalAmountNeeded = donations.reduce((sum, donation) => sum + donation.amountNeeded, 0);
+    //   const totalAmountRecieved = donations.reduce((sum, donation) => sum + donation.amountRecieved, 0);
 
-      return {
-        name: need.name,
-        count: need._count.id,
-        amountNeeded: totalAmountNeeded,
-        amountRecieved: totalAmountRecieved,
-      };
-    }));
+    //   return {
+    //     name: need.name,
+    //     count: need._count.id,
+    //     amountNeeded: totalAmountNeeded,
+    //     amountRecieved: totalAmountRecieved,
+    //   };
+    // }));
     
-      return {
-        orphanNeeds: needsWithAmountNeeded,
-      };
-    }
+    //   return {
+    //     orphanNeeds: needsWithAmountNeeded,
+    //   };
+    // }
 
     private async getOrphanGenderCount() {
       const orphans = await this.prisma.orphan.findMany({
@@ -593,18 +593,19 @@ export class OrphanService {
       return genderCounts;
     }
 
-    // Public method to get all orphan stats
-    async getAllOrphansStats() {
-      const [totalOrphans, needs, genderCount] = await Promise.all([
-        this.getTotalOrphans(),
-        this.getNeeds(),
-        this.getOrphanGenderCount(),
-      ]);
+  //   // Public method to get all orphan stats
+  //   async getAllOrphansStats() {
+  //     const [totalOrphans, needs, genderCount] = await Promise.all([
+  //       this.getTotalOrphans(),
+  //       this.getNeeds(),
+  //       this.getOrphanGenderCount(),
+  //     ]);
     
-      return {
-        totalOrphans,
-        needs,
-        genderCount,
-      };
-    }
-  }
+  //     return {
+  //       totalOrphans,
+  //       needs,
+  //       genderCount,
+  //     };
+  //   }
+  // }
+}

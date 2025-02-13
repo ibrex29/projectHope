@@ -3,6 +3,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { UpdateDonationDto } from './dto/create-donation.dto';
 import { UserType } from '../users/types/user.type';
 import { User } from '@prisma/client'
+import { CreateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
 @Injectable()
 export class SponsorService {
   constructor(private readonly prisma:PrismaService){}
@@ -40,61 +41,62 @@ export class SponsorService {
     }
   }
 
-  async getAllSponsors(): Promise<User[]> {
-    try {
-      const includeOrphanDetails = {
-        include: {
-          requests: {
-            include: {
-              donations: true,
-              needs: true,
-            },
-          },
-          createdBy: true,
-          updatedBy: true,
-        },
-      };
+  // async getAllSponsors(): Promise<User[]> {
+  //   try {
+  //     const includeOrphanDetails = {
+  //       include: {
+  //         requests: {
+  //           include: {
+  //             donations: true,
+  //             needs: true,
+  //           },
+  //         },
+  //         createdBy: true,
+  //         updatedBy: true,
+  //       },
+  //     };
   
-      return await this.prisma.user.findMany({
-        where: {
-          isDeleted: false,
-          roles: { some: { roleName: UserType.SPONSOR } },
-        },
-        include: {
-          profile: true,
-          Orphan: includeOrphanDetails,
-        },
-      });
-    } catch (error) {
-      console.error(`Error fetching users with orphan role: ${error.message}`);
-      throw new Error(`Error fetching users with orphan role: ${error.message}`);
-    }
-  }
+  //     return await this.prisma.user.findMany({
+  //       where: {
+  //         isDeleted: false,
+  //         roles: { some: { roleName: UserType.SPONSOR } },
+  //       },
+  //       include: {
+  //         profile: true,
+  //         Orphan: includeOrphanDetails,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error(`Error fetching users with orphan role: ${error.message}`);
+  //     throw new Error(`Error fetching users with orphan role: ${error.message}`);
+  //   }
+  // }
 
-  async getDonationsAndRequestsByUser(userId: string) {
-    try {
-      const donations = await this.prisma.donation.findMany({
-        where: {
-          createdByUserId: userId,
-        },
-        include: {
-          request: {
-            include: {
-              needs: true,},
-            },
-            user: {
-              include: {
-                profile: true, 
-                EmployementDetails:true
-              },
-            },
-          },
-        });
+  // async getDonationsAndRequestsByUser(userId: string) {
+  //   try {
+  //     const donations = await this.prisma.donation.findMany({
+  //       where: {
+  //         createdByUserId: userId,
+  //       },
+  //       include: {
+  //         request: {
+  //           include: {
+  //             needs: true,},
+  //           },
+  //           user: {
+  //             include: {
+  //               profile: true, 
+  //               EmployementDetails:true
+  //             },
+  //           },
+  //         },
+  //       });
     
-        return donations;
-      } catch (error) {
-        throw new Error(`Failed to retrieve donations for user: ${error.message}`);
-      }
-    }
+  //       return donations;
+  //     } catch (error) {
+  //       throw new Error(`Failed to retrieve donations for user: ${error.message}`);
+  //     }
+  //   }
+
 
 }

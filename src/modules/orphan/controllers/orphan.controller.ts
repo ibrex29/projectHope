@@ -60,10 +60,10 @@ export class OrphanController {
     return this.orphanService.getOrphansWithDeletionRequests();
   }
   
-  @Get('orhpan-stats-for-guardian')
-  async getOrphanStatsForGuardian(@User('userId') userId: string) {
-    return this.orphanService.getOrphanStatsForGuardian(userId);
-  }
+  // @Get('orhpan-stats-for-guardian')
+  // async getOrphanStatsForGuardian(@User('userId') userId: string) {
+  //   return this.orphanService.getOrphanStatsForGuardian(userId);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Delete('deletion-request')
@@ -76,9 +76,9 @@ export class OrphanController {
     return this.orphanService.deleteOrphan(orphanId, userId);
   }
  
-  @Get('orphans-stats')
-  async getAllOrphansStats() {
-    return this.orphanService.getAllOrphansStats();
-  }
+  // @Get('orphans-stats')
+  // async getAllOrphansStats() {
+  //   return this.orphanService.getAllOrphansStats();
+  // }
 
 }
