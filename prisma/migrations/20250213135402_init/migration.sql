@@ -157,6 +157,49 @@ CREATE TABLE "requests" (
 );
 
 -- CreateTable
+CREATE TABLE "sponsorship_requests" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "targetAmount" DOUBLE PRECISION NOT NULL,
+    "amountReceived" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "deadline" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "createdByUserId" TEXT,
+    "updatedByUserId" TEXT,
+
+    CONSTRAINT "sponsorship_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "action_logs" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actionType" TEXT NOT NULL,
+    "fromStatus" TEXT NOT NULL,
+    "toStatus" TEXT NOT NULL,
+    "reason" TEXT,
+    "sponsorshipRequestId" TEXT NOT NULL,
+    "createdByUserId" TEXT,
+
+    CONSTRAINT "action_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "supporting_documents" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "filename" TEXT NOT NULL,
+    "fileUrl" TEXT NOT NULL,
+    "sponsorshipRequestId" TEXT NOT NULL,
+
+    CONSTRAINT "supporting_documents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Need" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -199,6 +242,19 @@ CREATE TABLE "bank_details" (
 );
 
 -- CreateTable
+CREATE TABLE "DonationRequest" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "amountDonated" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "remark" TEXT,
+    "createdByUserId" TEXT,
+    "updatedByUserId" TEXT,
+
+    CONSTRAINT "DonationRequest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_UserRoles" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
@@ -212,6 +268,18 @@ CREATE TABLE "_RolePermissions" (
 
 -- CreateTable
 CREATE TABLE "_RequestOrphans" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_SponsorshipRequestOrphans" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_SponsorshipRequestDonations" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
 );
@@ -260,6 +328,18 @@ CREATE UNIQUE INDEX "_RequestOrphans_AB_unique" ON "_RequestOrphans"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_RequestOrphans_B_index" ON "_RequestOrphans"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_SponsorshipRequestOrphans_AB_unique" ON "_SponsorshipRequestOrphans"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_SponsorshipRequestOrphans_B_index" ON "_SponsorshipRequestOrphans"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_SponsorshipRequestDonations_AB_unique" ON "_SponsorshipRequestDonations"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_SponsorshipRequestDonations_B_index" ON "_SponsorshipRequestDonations"("B");
 
 -- AddForeignKey
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -313,6 +393,21 @@ ALTER TABLE "requests" ADD CONSTRAINT "requests_updatedByUserId_fkey" FOREIGN KE
 ALTER TABLE "requests" ADD CONSTRAINT "requests_needId_fkey" FOREIGN KEY ("needId") REFERENCES "Need"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "sponsorship_requests" ADD CONSTRAINT "sponsorship_requests_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sponsorship_requests" ADD CONSTRAINT "sponsorship_requests_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "action_logs" ADD CONSTRAINT "action_logs_sponsorshipRequestId_fkey" FOREIGN KEY ("sponsorshipRequestId") REFERENCES "sponsorship_requests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "action_logs" ADD CONSTRAINT "action_logs_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "supporting_documents" ADD CONSTRAINT "supporting_documents_sponsorshipRequestId_fkey" FOREIGN KEY ("sponsorshipRequestId") REFERENCES "sponsorship_requests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Donation" ADD CONSTRAINT "Donation_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "requests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -326,6 +421,12 @@ ALTER TABLE "Donation" ADD CONSTRAINT "Donation_updatedByUserId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "bank_details" ADD CONSTRAINT "bank_details_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DonationRequest" ADD CONSTRAINT "DonationRequest_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DonationRequest" ADD CONSTRAINT "DonationRequest_updatedByUserId_fkey" FOREIGN KEY ("updatedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_UserRoles" ADD CONSTRAINT "_UserRoles_A_fkey" FOREIGN KEY ("A") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -344,3 +445,15 @@ ALTER TABLE "_RequestOrphans" ADD CONSTRAINT "_RequestOrphans_A_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "_RequestOrphans" ADD CONSTRAINT "_RequestOrphans_B_fkey" FOREIGN KEY ("B") REFERENCES "requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SponsorshipRequestOrphans" ADD CONSTRAINT "_SponsorshipRequestOrphans_A_fkey" FOREIGN KEY ("A") REFERENCES "orphans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SponsorshipRequestOrphans" ADD CONSTRAINT "_SponsorshipRequestOrphans_B_fkey" FOREIGN KEY ("B") REFERENCES "sponsorship_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SponsorshipRequestDonations" ADD CONSTRAINT "_SponsorshipRequestDonations_A_fkey" FOREIGN KEY ("A") REFERENCES "DonationRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SponsorshipRequestDonations" ADD CONSTRAINT "_SponsorshipRequestDonations_B_fkey" FOREIGN KEY ("B") REFERENCES "sponsorship_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;

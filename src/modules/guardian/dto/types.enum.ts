@@ -3,5 +3,6 @@ export enum SponsorshipStatus {
     APPROVED = 'approved',
     REJECTED = 'rejected',
     CLOSED = "closed",
+    DRAFT = "draft",
   }
   

@@ -50,6 +50,9 @@ model User {
   updatedDonation Donation[] @relation(name: "donation_updated_by")
   createdSponsorshipRequest SponsorshipRequest[] @relation(name: "sponsorship_updated_by")
   updatedSponsorshipRequest SponsorshipRequest[] @relation(name: "sponsorship_created_by")
+  createdDonationRRequest DonationRequest[] @relation(name: "donation_created_by")
+  updatedDonationRRequest DonationRequest[] @relation(name: "donation_updated_by")
+  ActionLog ActionLog[] @relation(name: "action_created_by")
 }
 
 model Profile {
@@ -234,21 +237,51 @@ model SponsorshipRequest {
   targetAmount      Float      
   amountReceived    Float       @default(0.0) 
   deadline          DateTime    
-  status            String 
-  rejectionReason    String?    
-  supportingDocuments String[]
+  status            String      @default("draft")
   createdByUserId   String?
   updatedByUserId   String?
   createdBy         User?       @relation(fields: [createdByUserId], references: [id], name: "sponsorship_created_by")
   updatedBy         User?       @relation(fields: [updatedByUserId], references: [id], name: "sponsorship_updated_by")
-  // sponsorId         String?  
-  // sponsor           Sponsor?    @relation(fields: [sponsorId], references: [id]) // Link to sponsor entity
 
   orphans           Orphan[]    @relation("SponsorshipRequestOrphans")  
   donations         Donation[]  @relation("SponsorshipRequestDonations")
-  
+  ActionLog ActionLog[]
+  SupportingDocument SupportingDocument[]
+  DonationRequest DonationRequest[] @relation("SponsorshipRequestDonations")
+   
   @@map("sponsorship_requests")
 }
+
+model ActionLog {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  actionType          String      
+  fromStatus          String     
+  toStatus            String     
+  reason              String?    
+
+  sponsorshipRequestId String   
+  SponsorshipRequest  SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+
+  createdByUserId     String?
+  createdBy           User?    @relation(fields: [createdByUserId], references: [id], name: "action_created_by")
+
+  @@map("action_logs")
+}
+
+model SupportingDocument {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  filename            String
+  fileUrl             String
+  fileType             String
+  sponsorshipRequestId String  
+  SponsorshipRequest  SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+
+  @@map("supporting_documents")
+}
+
+
 
 
 model Need {
@@ -298,4 +331,19 @@ model BankDetails {
   user              User    @relation(name: "UserBankDetails", fields: [userId], references: [id])
 
   @@map("bank_details")
+}
+
+model DonationRequest {
+  id                    String     @id @default(uuid())
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  amountDonated         Float      @default(0)
+  remark                String?
+
+  createdByUserId       String?
+  updatedByUserId       String?
+  createdBy             User? @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
+  updatedBy             User? @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
+
+  SponsorshipRequest SponsorshipRequest[] @relation("SponsorshipRequestDonations")
 }

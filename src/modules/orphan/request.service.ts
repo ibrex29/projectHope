@@ -14,53 +14,53 @@ import { CreateRequestDto } from "./dto/create-request.dto";
 export class RequestService {
   constructor(private readonly prisma: PrismaService) {}
 
-async createRequest(createRequestDto: CreateRequestDto, userId: string) {
-  const { needId, orphanIds, amountNeeded, amountRecieved, description, supportingDocuments } = createRequestDto;
+// async createRequest(createRequestDto: CreateRequestDto, userId: string) {
+//   const { needId, orphanIds, amountNeeded, amountRecieved, description, supportingDocuments } = createRequestDto;
 
-  const need = await this.prisma.need.findUnique({ where: { id: needId } });
-  if (!need) {
-    throw new NotFoundException(`Need with ID ${needId} not found.`);
-  }
+//   const need = await this.prisma.need.findUnique({ where: { id: needId } });
+//   if (!need) {
+//     throw new NotFoundException(`Need with ID ${needId} not found.`);
+//   }
 
-  const orphans = await this.prisma.orphan.findMany({
-    where: { id: { in: orphanIds } },
-  });
-  if (orphans.length !== orphanIds.length) {
-    throw new NotFoundException(`One or more orphans with the provided IDs were not found.`);
-  }
+//   const orphans = await this.prisma.orphan.findMany({
+//     where: { id: { in: orphanIds } },
+//   });
+//   if (orphans.length !== orphanIds.length) {
+//     throw new NotFoundException(`One or more orphans with the provided IDs were not found.`);
+//   }
 
-  const result = await this.prisma.$transaction(async (prisma) => {
-    const request = await prisma.request.create({
-      data: {
-        description,
-        supportingDocuments,
-        needId,
-        createdByUserId: userId,
-        status: "pending",
-        isDeleted: "not_deleted",
-        orphans: {
-          connect: orphanIds.map((id) => ({ id }))
-        },
-      },
-    });
+//   const result = await this.prisma.$transaction(async (prisma) => {
+//     const request = await prisma.request.create({
+//       data: {
+//         description,
+//         supportingDocuments,
+//         needId,
+//         createdByUserId: userId,
+//         status: "pending",
+//         isDeleted: "not_deleted",
+//         orphans: {
+//           connect: orphanIds.map((id) => ({ id }))
+//         },
+//       },
+//     });
 
-    const donation = await prisma.donation.create({
-      data: {
-        amountNeeded,
-        amountRecieved,
-        requestId: request.id, 
-        userId, 
-      },
-    });
+//     const donation = await prisma.donation.create({
+//       data: {
+//         amountNeeded,
+//         amountRecieved,
+//         requestId: request.id, 
+//         userId, 
+//       },
+//     });
 
-    return {
-      request,
-      donation, 
-    };
-  });
+//     return {
+//       request,
+//       donation, 
+//     };
+//   });
 
-  return result.request;
-}
+//   return result.request;
+// }
   
 
 
