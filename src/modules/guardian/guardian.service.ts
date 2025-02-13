@@ -9,7 +9,7 @@ import { NotFoundError } from 'rxjs';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
 import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
-import { SponsorshipStatus } from './dto/types.enum';
+import { ActionType, SponsorshipStatus } from './dto/types.enum';
 import { PaginationMetadataDTO } from 'src/common/dto/page-meta.dto';
 import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
 
@@ -246,36 +246,139 @@ async update(id: string, dto: UpdateSponsorshipRequestDto) {
   });
 }
 
-async approveSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
-  return await this.prisma.sponsorshipRequest.update({
-    where: { id: requestId },
-    data: {
-      status: SponsorshipStatus.APPROVED,  
-      updatedByUserId: userId,
-      // rejectionReason: null, 
-    },
+async publishSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+  return await this.prisma.$transaction(async (prisma) => {
+   
+    const existingRequest = await prisma.sponsorshipRequest.findUnique({
+      where: { id: requestId },
+      select: { status: true }, 
+    });
+
+    if (!existingRequest) {
+      throw new Error("Sponsorship request not found");
+    }
+
+    const updatedRequest = await prisma.sponsorshipRequest.update({
+      where: { id: requestId },
+      data: {
+        status: SponsorshipStatus.PENDING,
+        updatedByUserId: userId,
+      },
+    });
+
+    await prisma.actionLog.create({
+      data: {
+        actionType: ActionType.PUBLISH_SPONSORSHIP_REQUEST,
+        fromStatus: existingRequest.status,
+        toStatus: SponsorshipStatus.PENDING,
+        sponsorshipRequestId: requestId,
+        createdByUserId: userId,
+      },
+    });
+
+    return updatedRequest;
   });
 }
 
-async closeSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
-  return await this.prisma.sponsorshipRequest.update({
-    where: { id: requestId },
-    data: {
-      status: SponsorshipStatus.CLOSED,  
-      updatedByUserId: userId,
-      // rejectionReason: null, 
-    },
+async approveSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+  return await this.prisma.$transaction(async (prisma) => {
+   
+    const existingRequest = await prisma.sponsorshipRequest.findUnique({
+      where: { id: requestId },
+      select: { status: true }, 
+    });
+
+    if (!existingRequest) {
+      throw new Error("Sponsorship request not found");
+    }
+
+    const updatedRequest = await prisma.sponsorshipRequest.update({
+      where: { id: requestId },
+      data: {
+        status: SponsorshipStatus.APPROVED,
+        updatedByUserId: userId,
+      },
+    });
+
+    await prisma.actionLog.create({
+      data: {
+        actionType: ActionType.APPROVE_SPONSORSHIP_REQUEST,
+        fromStatus: existingRequest.status,
+        toStatus: SponsorshipStatus.APPROVED,
+        sponsorshipRequestId: requestId,
+        createdByUserId: userId,
+      },
+    });
+
+    return updatedRequest;
   });
 }
 
 async rejectSponsorshipRequest(requestId: string, userId: string, rejectionReason: string): Promise<SponsorshipRequest> {
-  return await this.prisma.sponsorshipRequest.update({
-    where: { id: requestId },
-    data: {
-      status: SponsorshipStatus.REJECTED,  
-      updatedByUserId: userId,
-      // rejectionReason
-    },
+  return await this.prisma.$transaction(async (prisma) => {
+   
+    const existingRequest = await prisma.sponsorshipRequest.findUnique({
+      where: { id: requestId },
+      select: { status: true }, 
+    });
+
+    if (!existingRequest) {
+      throw new Error("Sponsorship request not found");
+    }
+
+    const updatedRequest = await prisma.sponsorshipRequest.update({
+      where: { id: requestId },
+      data: {
+        status: SponsorshipStatus.CLOSED,
+        updatedByUserId: userId,
+      },
+    });
+
+    await prisma.actionLog.create({
+      data: {
+        actionType: ActionType.REJECT_SPONSORSHIP_REQUEST,
+        fromStatus: existingRequest.status,
+        toStatus: SponsorshipStatus.REJECTED,
+        sponsorshipRequestId: requestId,
+        reason:rejectionReason,
+        createdByUserId: userId,
+      },
+    });
+
+    return updatedRequest;
+  });
+}
+async closeSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+  return await this.prisma.$transaction(async (prisma) => {
+   
+    const existingRequest = await prisma.sponsorshipRequest.findUnique({
+      where: { id: requestId },
+      select: { status: true }, 
+    });
+
+    if (!existingRequest) {
+      throw new Error("Sponsorship request not found");
+    }
+
+    const updatedRequest = await prisma.sponsorshipRequest.update({
+      where: { id: requestId },
+      data: {
+        status: SponsorshipStatus.CLOSED,
+        updatedByUserId: userId,
+      },
+    });
+
+    await prisma.actionLog.create({
+      data: {
+        actionType: ActionType.CLOSE_SPONSORSHIP_REQUEST,
+        fromStatus: existingRequest.status,
+        toStatus: SponsorshipStatus.APPROVED,
+        sponsorshipRequestId: requestId,
+        createdByUserId: userId,
+      },
+    });
+
+    return updatedRequest;
   });
 }
 
@@ -290,7 +393,6 @@ async getAllSponsorshipRequests(dto: FetchSponsorshipRequestDto) {
 
   const whereCondition: any = {};
 
-  // Apply search filter (title or description)
   if (search) {
     whereCondition.OR = [
       { title: { contains: search, mode: 'insensitive' } },
@@ -312,6 +414,8 @@ async getAllSponsorshipRequests(dto: FetchSponsorshipRequestDto) {
     include: {
       orphans: true,
       createdBy: true,
+      SupportingDocument:true,
+      ActionLog:true,
     },
     orderBy: { createdAt: 'desc' },
     take,
@@ -330,6 +434,8 @@ async getSponsorshipRequestById(id: string) {
     include: {
       orphans: true,
       createdBy: true,
+      SupportingDocument:true,
+      ActionLog:true,
     },
   });
 }
