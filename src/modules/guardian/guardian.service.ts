@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { User } from '@prisma/client';
+import { SponsorshipRequest, User } from '@prisma/client';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
 import { UserAlreadyExistsException } from '../users/exceptions/UserAlreadyExists.exception';
 import { UserType } from '../users/types/user.type';
@@ -8,6 +8,10 @@ import * as bcrypt from 'bcrypt';
 import { NotFoundError } from 'rxjs';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
+import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from '../sponsor/dto/create-sponsorship-request.dto';
+import { SponsorshipStatus } from './dto/types.enum';
+import { PaginationMetadataDTO } from 'src/common/dto/page-meta.dto';
+import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
 
 @Injectable()
 export class GuardianService {
@@ -126,7 +130,7 @@ export class GuardianService {
         },
         include: {
           profile: true,
-          Orphan: includeOrphanDetails,
+          // Orphan: includeOrphanDetails,
         },
       });
     } catch (error) {
@@ -160,7 +164,6 @@ export class GuardianService {
       hasProfile, 
     };
   }
-  
   
   async getTopGuardian(): Promise<{ name: string; email: string; profilePicture: string | null; orphanCount: number }[]> {
   const guardians = await this.prisma.user.findMany({
@@ -199,4 +202,125 @@ export class GuardianService {
     }))
     .sort((a, b) => b.orphanCount - a.orphanCount);
 }
+
+async create(dto: CreateSponsorshipRequestDto, userId: string) {
+  return await this.prisma.sponsorshipRequest.create({
+    data: {
+      createdByUserId: userId,
+      title: dto.title,
+      description: dto.description,
+      targetAmount: dto.targetAmount,
+      amountReceived: dto.amountReceived || 0,
+      deadline: dto.deadline,
+      status: SponsorshipStatus.PENDING,  
+      supportingDocuments: dto.supportingDocuments || [],
+      orphans: {
+        connect: dto.orphans.map((orphanId) => ({ id: orphanId })),
+      },
+    },
+  });
+}
+
+async update(id: string, dto: UpdateSponsorshipRequestDto) {
+  const existingRequest = await this.prisma.sponsorshipRequest.findUnique({ where: { id } });
+
+  if (!existingRequest) throw new NotFoundException('Sponsorship request not found');
+
+  return this.prisma.sponsorshipRequest.update({
+    where: { id },
+    data: {
+      ...dto,
+      orphans: dto.orphans ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) } : undefined,
+    },
+  });
+}
+
+async approveSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+  return await this.prisma.sponsorshipRequest.update({
+    where: { id: requestId },
+    data: {
+      status: SponsorshipStatus.REJECTED,  
+      updatedByUserId: userId,
+      rejectionReason: null, 
+    },
+  });
+}
+
+async closeSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+  return await this.prisma.sponsorshipRequest.update({
+    where: { id: requestId },
+    data: {
+      status: SponsorshipStatus.CLOSED,  
+      updatedByUserId: userId,
+      rejectionReason: null, 
+    },
+  });
+}
+
+async rejectSponsorshipRequest(requestId: string, userId: string, rejectionReason: string): Promise<SponsorshipRequest> {
+  return await this.prisma.sponsorshipRequest.update({
+    where: { id: requestId },
+    data: {
+      status: SponsorshipStatus.REJECTED,  
+      updatedByUserId: userId,
+      rejectionReason
+    },
+  });
+}
+
+async getAllSponsorshipRequests(dto: FetchSponsorshipRequestDto) {
+  let { page, limit, search, status } = dto;
+
+  page = Math.max(Number(page)); 
+  limit = Math.max(Number(limit)); 
+
+  const take = limit > 50 ? 50 : limit;
+  const skip = (page - 1) * take;
+
+  const whereCondition: any = {};
+
+  // Apply search filter (title or description)
+  if (search) {
+    whereCondition.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  if (status) {
+    whereCondition.status = status;
+  }
+
+
+  const totalCount = await this.prisma.sponsorshipRequest.count({
+    where: whereCondition,
+  });
+
+  const sponsorshipRequests = await this.prisma.sponsorshipRequest.findMany({
+    where: whereCondition,
+    include: {
+      orphans: true,
+      createdBy: true,
+    },
+    orderBy: { createdAt: 'desc' },
+    take,
+    skip, 
+  });
+
+  return {
+    data: sponsorshipRequests,
+    meta: new PaginationMetadataDTO({ pageOptionsDTO: dto, itemCount: totalCount }),
+  };
+}
+
+async getSponsorshipRequestById(id: string) {
+  return await this.prisma.sponsorshipRequest.findUnique({
+    where: { id },
+    include: {
+      orphans: true,
+      createdBy: true,
+    },
+  });
+}
+
 }

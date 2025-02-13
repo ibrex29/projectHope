@@ -2,59 +2,108 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Orphan } from "@prisma/client";
 import { PrismaService } from "prisma/prisma.service";
 import { Status, DeleteStatus } from "src/common/types/status.type";
-import { CreateRequestDto } from "./dto/create-request.dto";
+// import { CreateNeedDto, CreateRequestDto } from "./dto/create-request.dto";
 import { OrphanRemovalDto } from "./dto/orphan-request-removal.dto";
 import { RequestRemovalDto } from "./dto/request-removal.dto";
 import { Request as PrismaRequest } from '@prisma/client';
+import { UpdateNeedDto } from "./dto/need/update-need.dto";
+import { CreateNeedDto } from "./dto/need/create-need.dto";
+import { CreateRequestDto } from "./dto/create-request.dto";
 
 @Injectable()
 export class RequestService {
   constructor(private readonly prisma: PrismaService) {}
 
-async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
-    const { orphanId, description, needs, amountNeeded,amountRecieved } = createRequestDto;
-  
-    // Check if the orphan exists
-    const orphan = await this.prisma.orphan.findUnique({ where: { id: orphanId } });
-    if (!orphan) {
-      throw new NotFoundException(`Orphan with ID '${orphanId}' not found`);
-    }
-  
-    const needData = needs?.map(need => ({
-      name: need.name,
-      description: need.description,
-      additionalInfo: need.additionalInfo,
-      supportiveDocuments: need.supportiveDocuments,
-    })) || [];
-  
-    // Create the request
-    const request = await this.prisma.request.create({
+async createRequest(createRequestDto: CreateRequestDto, userId: string) {
+  const { needId, orphanIds, amountNeeded, amountRecieved, description, supportingDocuments } = createRequestDto;
+
+  const need = await this.prisma.need.findUnique({ where: { id: needId } });
+  if (!need) {
+    throw new NotFoundException(`Need with ID ${needId} not found.`);
+  }
+
+  const orphans = await this.prisma.orphan.findMany({
+    where: { id: { in: orphanIds } },
+  });
+  if (orphans.length !== orphanIds.length) {
+    throw new NotFoundException(`One or more orphans with the provided IDs were not found.`);
+  }
+
+  const result = await this.prisma.$transaction(async (prisma) => {
+    const request = await prisma.request.create({
       data: {
         description,
-        orphanId,
+        supportingDocuments,
+        needId,
         createdByUserId: userId,
-        userId: userId,
-        status: Status.PENDING,
-        isDeleted:DeleteStatus.NOT_DELETED,
-        needs: {
-          create: needData,
+        status: "pending",
+        isDeleted: "not_deleted",
+        orphans: {
+          connect: orphanIds.map((id) => ({ id }))
         },
-        donations: {
-          create: { 
-            amountNeeded: amountNeeded , 
-            userId: orphan.userId,
-            amountRecieved:amountRecieved 
-          },
-        },
-      },
-      include: {
-        needs: true,
-        donations: true,
       },
     });
+
+    const donation = await prisma.donation.create({
+      data: {
+        amountNeeded,
+        amountRecieved,
+        requestId: request.id, 
+        userId, 
+      },
+    });
+
+    return {
+      request,
+      donation, 
+    };
+  });
+
+  return result.request;
+}
   
-    return request;
+
+
+async create(createNeedDto: CreateNeedDto) {
+  return this.prisma.need.create({
+    data: createNeedDto,
+  });
+}
+
+async findAll() {
+  return this.prisma.need.findMany();
+}
+
+async findOne(id: string) {
+  const need = await this.prisma.need.findUnique({ where: { id } });
+  if (!need) {
+    throw new NotFoundException(`Need with ID ${id} not found`);
   }
+  return need;
+}
+
+async update(id: string, updateNeedDto: UpdateNeedDto) {
+  const need = await this.prisma.need.findUnique({ where: { id } });
+  if (!need) {
+    throw new NotFoundException(`Need with ID ${id} not found`);
+  }
+  return this.prisma.need.update({
+    where: { id },
+    data: updateNeedDto,
+  });
+}
+
+async remove(id: string) {
+  const need = await this.prisma.need.findUnique({ where: { id } });
+  if (!need) {
+    throw new NotFoundException(`Need with ID ${id} not found`);
+  }
+  return this.prisma.need.delete({ where: { id } });
+}
+
+
+
+//request 
 
   async orphanDeletionRequest(dto: OrphanRemovalDto, userId: string): Promise<Orphan> {
     if (!dto.orphanId) {
@@ -155,27 +204,27 @@ async createNeedRequest(createRequestDto: CreateRequestDto, userId: string) {
       });
     }
 
-    async listAllRequests() {
-      try {
-        const requests = await this.prisma.request.findMany({
-          where: {
-            isDeleted: DeleteStatus.REQUEST_DELETION,          },
-          include: {
-            orphan: true,       
-            donations: true,   
-            needs: true,      
-            user: {
-              select:{
-                profile:true,
-              }
-            },        
-            createdBy: true,    
-            updatedBy: true,    
-          },
-        });
-        return requests;
-      } catch (error) {
-        throw new Error(`Failed to list all requests: ${error.message}`);
-      }
-    }
+    // async listAllRequests() {
+    //   try {
+    //     const requests = await this.prisma.request.findMany({
+    //       where: {
+    //         isDeleted: DeleteStatus.REQUEST_DELETION,          },
+    //       include: {
+    //         // orphan: true,       
+    //         // donations: true,   
+    //         needs: true,      
+    //         user: {
+    //           select:{
+    //             profile:true,
+    //           }
+    //         },        
+    //         createdBy: true,    
+    //         updatedBy: true,    
+    //       },
+    //     });
+    //     return requests;
+    //   } catch (error) {
+    //     throw new Error(`Failed to list all requests: ${error.message}`);
+    //   }
+    // }
   }

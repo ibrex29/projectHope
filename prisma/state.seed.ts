@@ -26,15 +26,13 @@ async function main() {
   const jigawaState = await prisma.state.create({
     data: {
       name: 'Jigawa',
-      createdBy: { connect: { id: adminUser.id } }, // Link to created admin user
-      updatedBy: { connect: { id: adminUser.id } }, // Link to created admin user
       localGovernments: {
         create: [
-          { name: 'Hadejia', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Dutse', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Kazaure', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Gwaram', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
-          { name: 'Ringim', createdBy: { connect: { id: adminUser.id } }, updatedBy: { connect: { id: adminUser.id } } },
+          { name: 'Hadejia',  },
+          { name: 'Dutse',  },
+          { name: 'Kazaure'},
+          { name: 'Gwaram',  },
+          { name: 'Ringim', },
           // Add other local governments here
         ],
       },
