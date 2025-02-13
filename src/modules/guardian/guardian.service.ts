@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { NotFoundError } from 'rxjs';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
-import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from '../sponsor/dto/create-sponsorship-request.dto';
+import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
 import { SponsorshipStatus } from './dto/types.enum';
 import { PaginationMetadataDTO } from 'src/common/dto/page-meta.dto';
 import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
@@ -210,16 +210,27 @@ async create(dto: CreateSponsorshipRequestDto, userId: string) {
       title: dto.title,
       description: dto.description,
       targetAmount: dto.targetAmount,
-      amountReceived: dto.amountReceived || 0,
       deadline: dto.deadline,
-      status: SponsorshipStatus.PENDING,  
-      supportingDocuments: dto.supportingDocuments || [],
+      status: SponsorshipStatus.DRAFT,  
       orphans: {
         connect: dto.orphans.map((orphanId) => ({ id: orphanId })),
       },
+      SupportingDocument: dto.supportingDocuments && dto.supportingDocuments.length > 0
+        ? {
+            create: dto.supportingDocuments.map((doc) => ({
+              filename: doc.filename,
+              fileUrl: doc.fileUrl,
+              fileType:doc.fileType
+            })),
+          }
+        : undefined,
+    },
+    include: {
+      SupportingDocument: true,
     },
   });
 }
+
 
 async update(id: string, dto: UpdateSponsorshipRequestDto) {
   const existingRequest = await this.prisma.sponsorshipRequest.findUnique({ where: { id } });
@@ -239,9 +250,9 @@ async approveSponsorshipRequest(requestId: string, userId: string): Promise<Spon
   return await this.prisma.sponsorshipRequest.update({
     where: { id: requestId },
     data: {
-      status: SponsorshipStatus.REJECTED,  
+      status: SponsorshipStatus.APPROVED,  
       updatedByUserId: userId,
-      rejectionReason: null, 
+      // rejectionReason: null, 
     },
   });
 }
@@ -252,7 +263,7 @@ async closeSponsorshipRequest(requestId: string, userId: string): Promise<Sponso
     data: {
       status: SponsorshipStatus.CLOSED,  
       updatedByUserId: userId,
-      rejectionReason: null, 
+      // rejectionReason: null, 
     },
   });
 }
@@ -263,7 +274,7 @@ async rejectSponsorshipRequest(requestId: string, userId: string, rejectionReaso
     data: {
       status: SponsorshipStatus.REJECTED,  
       updatedByUserId: userId,
-      rejectionReason
+      // rejectionReason
     },
   });
 }

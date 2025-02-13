@@ -5,7 +5,7 @@ import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
 import { Public, Role } from 'src/common/constants/routes.constant';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
-import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from '../sponsor/dto/create-sponsorship-request.dto';
+import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
 import { RejectSponsorshipRequestDto } from '../sponsor/dto/reject-spoonsoorship.dto';
 import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
 import { RolesGuard } from '../auth/guard/role.guard';
@@ -70,19 +70,19 @@ export class SponsorshipController {
   }
   
 
-  @Patch(':id/approve')
+  @Post(':id/approve')
   @ApiOperation({ summary: 'Approve a sponsorship request' })
   async approveSponsorship(@Param('id') id: string, @User('userId') userId: string) {
     return this.guardianService.approveSponsorshipRequest(id, userId);
   }
 
-  @Patch(':id/close')
+  @Post(':id/close')
   @ApiOperation({ summary: 'Close a sponsorship request' }) 
   async closeSponsorship(@Param('id') id: string, @User('userId') userId: string) {
     return this.guardianService.closeSponsorshipRequest(id, userId);
   }
 
-  @Patch(':id/reject')
+  @Post(':id/reject')
   @ApiOperation({ summary: 'Reject a sponsorship request with a reason' })
   async rejectSponsorship(
     @Param('id') id: string, 
