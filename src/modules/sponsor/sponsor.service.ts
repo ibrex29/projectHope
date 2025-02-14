@@ -97,30 +97,30 @@ export class SponsorService {
   //     } catch (error) {
   //       throw new Error(`Failed to retrieve donations for user: ${error.message}`);
   //     }
-  //   }
-  async create(createDonationDto: CreateDonationDto, userId: string) {
-    return await this.prisma.donationRequest.create({
-      data: {
-        amountDonated: createDonationDto.amountDonated,
-        remark: createDonationDto.remark,
-        createdByUserId: userId,
-        SponsorshipRequest: {  
-          connect: createDonationDto.sponsorshipRequestIds.map((id) => ({ id })),
-        },
-      },
-    });
-  }
+  // //   }
+  // async create(createDonationDto: CreateDonationDto, userId: string) {
+  //   return await this.prisma.donationRequest.create({
+  //     data: {
+  //       amountDonated: createDonationDto.amountDonated,
+  //       remark: createDonationDto.remark,
+  //       createdByUserId: userId,
+  //       SponsorshipRequest: {  
+  //         connect: createDonationDto.sponsorshipRequestIds.map((id) => ({ id })),
+  //       },
+  //     },
+  //   });
+  // }
   
-  async getUserDonations(userId: string) {
-    return await this.prisma.donationRequest.findMany({
-      where: { createdByUserId: userId },
-      include: {
-        SponsorshipRequest: {
-          include: {
-            orphans: true, 
-          },
-        }, 
-      },
-    });
-  }
+  // async getUserDonations(userId: string) {
+    // return await this.prisma.donationRequest.findMany({
+    //   where: { createdByUserId: userId },
+    //   include: {
+    //     SponsorshipRequest: {
+    //       include: {
+    //         orphans: true, 
+    //       },
+    //     }, 
+    //   },
+    // });
+  // }
 }  

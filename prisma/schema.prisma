@@ -247,8 +247,7 @@ model SponsorshipRequest {
   donations         Donation[]  @relation("SponsorshipRequestDonations")
   ActionLog ActionLog[]
   SupportingDocument SupportingDocument[]
-  DonationRequest DonationRequest[] @relation("SponsorshipRequestDonations")
-   
+  DonationRequest DonationRequest[]
   @@map("sponsorship_requests")
 }
 
@@ -272,7 +271,8 @@ model ActionLog {
 model SupportingDocument {
   id                  String   @id @default(uuid())
   createdAt           DateTime @default(now())
-  filename            String
+  title               String   @default("")
+  description         String   @default("")
   fileUrl             String
   fileType             String
   sponsorshipRequestId String  
@@ -337,10 +337,16 @@ model DonationRequest {
   amountDonated         Float      @default(0)
   remark                String?
 
+  paymentStatus         String      @default("pending") 
+  transactionReference  String?   @unique 
+  paymentGateway        String?  
+
   createdByUserId       String?
   updatedByUserId       String?
   createdBy             User? @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
   updatedBy             User? @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
+  sponsorshipId         String
+  sponsorship           SponsorshipRequest @relation(fields: [sponsorshipId], references: [id])
 
-  SponsorshipRequest SponsorshipRequest[] @relation("SponsorshipRequestDonations")
+
 }

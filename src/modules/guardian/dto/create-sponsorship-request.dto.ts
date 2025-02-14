@@ -2,7 +2,10 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class SupportingDocumentDto {
   @ApiProperty({ example: 'document1.pdf', description: 'The filename of the supporting document.' })
-  filename: string;
+  title: string;
+
+  @ApiProperty({ example: 'this is a description', description: 'The dscription.' })
+  description: string;
 
   @ApiProperty({ example: 'https://example.com/uploads/document1.pdf', description: 'The URL where the document is stored.' })
   fileUrl: string;
@@ -37,3 +40,5 @@ export class CreateSponsorshipRequestDto {
 }
 
 export class UpdateSponsorshipRequestDto extends PartialType(CreateSponsorshipRequestDto) {}
+
+export class UpdateSupportingDocumentDto extends PartialType(SupportingDocumentDto){}
