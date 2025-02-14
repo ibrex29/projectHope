@@ -13,4 +13,8 @@ export enum SponsorshipStatus {
     CLOSE_SPONSORSHIP_REQUEST = "CLOSE_SPONSORSHIP_REQUEST",
     UPDATE_SPONSORSHIP_REQUEST = "UPDATE_SPONSORSHIP_REQUEST",
   }
-  
+  export enum PaymentStatus {
+    PENDING = "pending",
+    SUCCESS = "success",
+    FAILED = "failed"
+  }

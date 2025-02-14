@@ -1,47 +1,51 @@
-import { Controller, Body, Get, Param, Patch, Post, UseGuards,} from '@nestjs/common';
-import { SponsorService } from './sponsor.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UpdateDonationDto } from './dto/create-donation.dto';
-import { Public } from 'src/common/constants/routes.constant';
+import { Controller, Get, Post, Body,  Req, Res, Query, Headers} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import { InitializePaymentDto } from "../guardian/dto/initialize-payment.dto";
+import { SponsorService } from "./sponsor.service";
+import { PaymentService } from "./payment.service";
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
-import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
-import { CreateDonationDto } from './dto/donation/create-donation.dto';
 
 
 @ApiTags("sponsor")
 @ApiBearerAuth()
 @Controller({ path: 'sponsor', version: '1' })
 export class SponsorController {
-  constructor(private readonly sponsorService: SponsorService) {}
+  constructor
+      (private readonly sponsorService: SponsorService,
+      private readonly paymentService: PaymentService,
+  ) {}
 
-  // @Patch()
-  // async createDonation(@Body() updateDonationDto: UpdateDonationDto,@User('userId') userId: string) {
-  //   return this.sponsorService.createDonationByRequest(updateDonationDto,userId);
-  // }
-
-  // @Get()
-  // async getAllSponsor(){
-  //   return this.sponsorService.getAllSponsors();
-  // }
-
-  // @Get('my-donation')
-  // async getDonationsByUser(@User('userId') userId: string) {
-  //   return this.sponsorService.getDonationsAndRequestsByUser(userId);
-  // }
-
-  @Post()
-  // @ApiBearerAuth() // API requires authentication
-  @ApiOperation({ summary: 'Create a new donation' })
-  async create(@Body() createDonationDto: CreateDonationDto, @User('userId') userId: string) {
-    return this.sponsorService.create(createDonationDto, userId);
+  @Post('Donate')
+  @ApiTags('donations')
+  async initializePayment(@Body() body: InitializePaymentDto,@User('email')email:string) {
+      return await this.paymentService.initializePayment(
+          body.amount,
+          email,
+          body.donationId,
+      );
   }
 
-
-  @Get('my-donations')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get my donations' })
-  async getMyDonations(@User('userId') userId: string) {
-    return this.sponsorService.getUserDonations(userId);
+  @Get('verify')
+  @ApiTags('donations')
+  async verifyPayment(@Query('reference') reference: string) {
+    return await this.paymentService.verifyPayment(reference);
   }
+
+  // @Post('webhook')
+  // @ApiTags('donations')
+  // async handleWebhook(
+  //   @Req() req: Request,
+  //   @Res() res: Response,
+  //   @Headers('x-paystack-signature') signature: string,
+  // ) {
+  //   try {
+  //     await this.paymentService.handleWebhook(req.body, signature);
+  //     res.sendStatus(200);
+  //   } catch (error) {
+  //     res.status(400).json({ message: 'Webhook processing failed' });
+  //   }
+  // }
+
+
 
 }

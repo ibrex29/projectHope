@@ -1,15 +1,18 @@
-import { Controller, Get, Post, Put, Body, Param, Patch, Query, UseGuards} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param,  Req, Res, Query, UseGuards, Headers, Delete} from '@nestjs/common';
 import { GuardianService } from './guardian.service';
 import { ApiBearerAuth, ApiResponse, ApiTags,ApiOperation } from '@nestjs/swagger';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
 import { Public, Role } from 'src/common/constants/routes.constant';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
-import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
+import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto, UpdateSupportingDocumentDto } from './dto/create-sponsorship-request.dto';
 import { RejectSponsorshipRequestDto } from '../sponsor/dto/reject-spoonsoorship.dto';
 import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
 import { RolesGuard } from '../auth/guard/role.guard';
 import { UserType } from '../users/types/user.type';
+import { PaymentService } from '../sponsor/payment.service';
+import { Request, Response } from 'express';
+import { InitializePaymentDto } from './dto/initialize-payment.dto';
 
 
 @ApiBearerAuth()
@@ -52,7 +55,10 @@ export class GuardianController {
 @ApiTags('Sponsorship Requests')
 @Controller('sponsorship-requests')
 export class SponsorshipController {
-  constructor(private readonly guardianService: GuardianService) {}
+  constructor(
+    private readonly guardianService: GuardianService,
+    private readonly paymentService: PaymentService,
+  ) {}
 
   @Post('request')
   @ApiOperation({ summary: 'Create a new sponsorship request' })
@@ -66,7 +72,13 @@ export class SponsorshipController {
     @Param('id') id: string,
     @Body() dto: UpdateSponsorshipRequestDto
   ) {
-    return this.guardianService.update(id, dto);
+    return this.guardianService.updateRequest(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete draft requests' })
+  async deleteDraftRequest(@Param('id') id:string){
+    return this.guardianService.deleteDraftRequest(id);
   }
   
 
@@ -76,10 +88,21 @@ export class SponsorshipController {
     return this.guardianService.approveSponsorshipRequest(id, userId);
   }
 
+  @Post(':id/publish')
+  @ApiOperation({ summary: 'Approve a sponsorship request' })
+  async publishSponsorship(@Param('id') id: string, @User('userId') userId: string) {
+    return this.guardianService.publishSponsorshipRequest(id, userId);
+  }
+
   @Post(':id/close')
   @ApiOperation({ summary: 'Close a sponsorship request' }) 
-  async closeSponsorship(@Param('id') id: string, @User('userId') userId: string) {
-    return this.guardianService.closeSponsorshipRequest(id, userId);
+  async closeSponsorship(
+    @Param('id') id: string,
+    @User('userId') userId: string,
+    @Body() dto: RejectSponsorshipRequestDto
+  
+  ) {
+    return this.guardianService.closeSponsorshipRequest(id, userId,dto.Reason);
   }
 
   @Post(':id/reject')
@@ -89,7 +112,12 @@ export class SponsorshipController {
     @User('userId') userId: string, 
     @Body() dto: RejectSponsorshipRequestDto
   ) {
-    return this.guardianService.rejectSponsorshipRequest(id, userId, dto.rejectionReason);
+    return this.guardianService.rejectSponsorshipRequest(id, userId, dto.Reason);
+  }
+
+  @Put(':id/attachments')
+  async update(@Param('id') id: string, @Body() updateData: UpdateSupportingDocumentDto) {
+    return this.guardianService.updateSupportingDocument(id, updateData);
   }
 
   @Get()
@@ -103,5 +131,5 @@ export class SponsorshipController {
   async getById(@Param('id') id: string) {
     return this.guardianService.getSponsorshipRequestById(id);
   }
-}
 
+}

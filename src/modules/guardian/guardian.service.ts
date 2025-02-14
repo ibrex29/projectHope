@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { SponsorshipRequest, User } from '@prisma/client';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { NotFoundError } from 'rxjs';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
-import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto } from './dto/create-sponsorship-request.dto';
+import { CreateSponsorshipRequestDto, UpdateSponsorshipRequestDto, UpdateSupportingDocumentDto } from './dto/create-sponsorship-request.dto';
 import { ActionType, SponsorshipStatus } from './dto/types.enum';
 import { PaginationMetadataDTO } from 'src/common/dto/page-meta.dto';
 import { FetchSponsorshipRequestDto } from '../sponsor/dto/fetch-requestt.dto';
@@ -218,7 +218,7 @@ async create(dto: CreateSponsorshipRequestDto, userId: string) {
       SupportingDocument: dto.supportingDocuments && dto.supportingDocuments.length > 0
         ? {
             create: dto.supportingDocuments.map((doc) => ({
-              filename: doc.filename,
+              title: doc.title,
               fileUrl: doc.fileUrl,
               fileType:doc.fileType
             })),
@@ -231,18 +231,90 @@ async create(dto: CreateSponsorshipRequestDto, userId: string) {
   });
 }
 
+async updateRequest(id: string, dto: UpdateSponsorshipRequestDto) {
+  return await this.prisma.$transaction(async (tx) => {
+    const existingRequest = await tx.sponsorshipRequest.findUnique({ 
+      where: { id },
+      include: { SupportingDocument: true }
+    });
+    if (!existingRequest){
+      throw new NotFoundException('Sponsorship request not found');
+    } 
+    if (existingRequest.status !== SponsorshipStatus.DRAFT) {
+      throw new BadRequestException('Only draft sponsorship requests can be updated');
+    }
 
-async update(id: string, dto: UpdateSponsorshipRequestDto) {
-  const existingRequest = await this.prisma.sponsorshipRequest.findUnique({ where: { id } });
+    if (dto.supportingDocuments && dto.supportingDocuments.length > 0) {
+      await tx.supportingDocument.createMany({
+        data: dto.supportingDocuments.map((doc) => ({
+          sponsorshipRequestId: id,
+          title: doc.title,
+          fileUrl: doc.fileUrl,
+          fileType: doc.fileType,
+        })),
+      });
+    }
 
-  if (!existingRequest) throw new NotFoundException('Sponsorship request not found');
+    return await tx.sponsorshipRequest.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        targetAmount: dto.targetAmount,
+        deadline: dto.deadline,
+        orphans: dto.orphans ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) } : undefined,
+      },
+      include: {
+        SupportingDocument: true, 
+      },
+    });
+  });
+}
 
-  return this.prisma.sponsorshipRequest.update({
-    where: { id },
-    data: {
-      ...dto,
-      orphans: dto.orphans ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) } : undefined,
-    },
+async updateSupportingDocument(
+  id: string,
+  updateData: UpdateSupportingDocumentDto,
+) {
+  try {
+    const document = await this.prisma.supportingDocument.update({
+      where: { id },
+      data: updateData,
+    });
+    return document;
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new NotFoundException('Supporting document not found');
+    }
+  }
+}
+
+async deleteDraftRequest(requestId: string): Promise<{ message: string; requestId: string }> {
+  return await this.prisma.$transaction(async (tx) => {
+    const request = await tx.sponsorshipRequest.findUnique({
+
+      where: { id: requestId },
+      select: { id: true, status: true }
+    });
+
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+    
+    if (request.status !== SponsorshipStatus.DRAFT) {
+      throw new NotFoundException('Request is not in draft status');
+    }
+    
+    await Promise.all([
+      tx.supportingDocument.deleteMany({ where: { sponsorshipRequestId: requestId } }),
+      tx.actionLog.deleteMany({ where: { sponsorshipRequestId: requestId } }),
+    ]);
+
+    await tx.sponsorshipRequest.delete({ where: { id: requestId } });
+
+    return {
+      message: 'Sponsorship request and all related documents have been successfully deleted.',
+      requestId,
+    };
   });
 }
 
@@ -329,7 +401,7 @@ async rejectSponsorshipRequest(requestId: string, userId: string, rejectionReaso
     const updatedRequest = await prisma.sponsorshipRequest.update({
       where: { id: requestId },
       data: {
-        status: SponsorshipStatus.CLOSED,
+        status: SponsorshipStatus.REJECTED,
         updatedByUserId: userId,
       },
     });
@@ -348,7 +420,8 @@ async rejectSponsorshipRequest(requestId: string, userId: string, rejectionReaso
     return updatedRequest;
   });
 }
-async closeSponsorshipRequest(requestId: string, userId: string): Promise<SponsorshipRequest> {
+
+async closeSponsorshipRequest(requestId: string, userId: string, closeReason:string): Promise<SponsorshipRequest> {
   return await this.prisma.$transaction(async (prisma) => {
    
     const existingRequest = await prisma.sponsorshipRequest.findUnique({
@@ -372,7 +445,8 @@ async closeSponsorshipRequest(requestId: string, userId: string): Promise<Sponso
       data: {
         actionType: ActionType.CLOSE_SPONSORSHIP_REQUEST,
         fromStatus: existingRequest.status,
-        toStatus: SponsorshipStatus.APPROVED,
+        toStatus: SponsorshipStatus.CLOSED,
+        reason: closeReason,
         sponsorshipRequestId: requestId,
         createdByUserId: userId,
       },
