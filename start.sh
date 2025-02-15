@@ -13,8 +13,8 @@ yarn prisma migrate deploy
 # yarn seed
 
 # Start Prisma Studio in the background
-echo "Starting Prisma Studio..."
-yarn prisma studio &
+# echo "Starting Prisma Studio..."
+# yarn prisma studio &
 
 # Start the application
 echo "Starting the application..."
