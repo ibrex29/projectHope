@@ -9,8 +9,8 @@ echo "Running database migrations..."
 yarn prisma migrate deploy
 
 # Seed the database
-echo "Seeding the database..."
-yarn seed
+# echo "Seeding the database..."
+# yarn seed
 
 # Start Prisma Studio in the background
 echo "Starting Prisma Studio..."
