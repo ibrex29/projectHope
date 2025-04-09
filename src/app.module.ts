@@ -1,23 +1,32 @@
+import { HttpModule } from '@nestjs/axios';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { Module } from '@nestjs/common';
-import { CacheConfigModule } from './cache.module';
-import { HTTP_MAX_REDIRECTS, HTTP_TIMEOUT, THROTTLE_LIMIT, THROTTLE_TTL } from './common/constants';
+import { ThrottlerModule, seconds } from '@nestjs/throttler';
+import { join } from 'path';
 import { PrismaModule } from 'prisma/prisma.module';
-import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ThrottlerModule, seconds } from '@nestjs/throttler';
-import { HttpModule } from '@nestjs/axios';
+import { CacheConfigModule } from './cache.module';
+import {
+  HTTP_MAX_REDIRECTS,
+  HTTP_TIMEOUT,
+  THROTTLE_LIMIT,
+  THROTTLE_TTL,
+} from './common/constants';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { OrphanModule } from './modules/orphan/orphan.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { GuardianModule } from './modules/guardian/guardian.module';
+import { OrphanModule } from './modules/orphan/orphan.module';
 import { SponsorModule } from './modules/sponsor/sponsor.module';
+import { UsersModule } from './modules/users/users.module';
+import { UploadModule } from './upload/upload.module';
+
+console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
 @Module({
   imports: [
     ConfigModule.forRoot({
-      cache: true, 
+      cache: true,
       envFilePath: ['docker.env', '.env'],
       isGlobal: true,
     }),
@@ -31,8 +40,8 @@ import { SponsorModule } from './modules/sponsor/sponsor.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => [
         {
-          ttl: seconds(configService.get(THROTTLE_TTL) || 10), 
-          limit: configService.get(THROTTLE_LIMIT) || 20, 
+          ttl: seconds(configService.get(THROTTLE_TTL) || 10),
+          limit: configService.get(THROTTLE_LIMIT) || 20,
         },
       ],
     }),
@@ -51,6 +60,7 @@ import { SponsorModule } from './modules/sponsor/sponsor.module';
     OrphanModule,
     GuardianModule,
     SponsorModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
