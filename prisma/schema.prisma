@@ -14,45 +14,55 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isVerified  Boolean @default(false)
-  isDeleted   Boolean @default(false)
-  isAchieved  Boolean @default(false)
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isVerified   Boolean  @default(false)
+  isDeleted    Boolean  @default(false)
+  isAchieved   Boolean  @default(false)
   phoneNumber  String?
   email        String?  @unique
   password     String
-  isActive     Boolean @default(false)
+  isActive     Boolean  @default(false)
   authStrategy String?
 
-  profile          Profile?        @relation("UserProfile")
-  roles            Role[]          @relation("UserRoles")
-  EmployementDetails EmployementDetails[] @relation("EmployementDetails")
+  profile           Profile?            @relation("UserProfile")
+  roles             Role[]              @relation("UserRoles")
+  EmploymentDetails EmploymentDetails[] @relation("EmploymentDetails")
 
-  createdIdentities               Identity[]                @relation("identity_created_by")
-  updatedIdentities               Identity[]                @relation("identity_updated_by")
-  createdProfiles                 Profile[]                 @relation("profile_created_by")
-  updatedProfiles                 Profile[]                 @relation("profile_updated_by")
-  createdPermissions              Permission[]              @relation("permission_created_by")
-  updatedPermissions              Permission[]              @relation("permission_updated_by")
-  Orphan                          Orphan[]                  @relation("OrphanProfile")
-  createdOrphan                   Orphan[]                  @relation("orphan_created_by")
-  updatedOrphan                   Orphan[]                  @relation("orphan_updated_by")
-  donations                       Donation[]                @relation("UserDonations")
-  bankDetails                     BankDetails[]             @relation("UserBankDetails")
-
-  @@map("users")
+  createdIdentities  Identity[]    @relation("identity_created_by")
+  updatedIdentities  Identity[]    @relation("identity_updated_by")
+  createdProfiles    Profile[]     @relation("profile_created_by")
+  updatedProfiles    Profile[]     @relation("profile_updated_by")
+  createdPermissions Permission[]  @relation("permission_created_by")
+  updatedPermissions Permission[]  @relation("permission_updated_by")
+  Orphan             Orphan[]      @relation("OrphanProfile")
+  createdOrphan      Orphan[]      @relation("orphan_created_by")
+  updatedOrphan      Orphan[]      @relation("orphan_updated_by")
+  donations          Donation[]    @relation("UserDonations")
+  bankDetails        BankDetails[] @relation("UserBankDetails")
 
   createdRequest Request[] @relation(name: "request_created_by")
   updatedRequest Request[] @relation(name: "request_updated_by")
+
   createdDonation Donation[] @relation(name: "donation_created_by")
   updatedDonation Donation[] @relation(name: "donation_updated_by")
+
   createdSponsorshipRequest SponsorshipRequest[] @relation(name: "sponsorship_updated_by")
   updatedSponsorshipRequest SponsorshipRequest[] @relation(name: "sponsorship_created_by")
+
   createdDonationRRequest DonationRequest[] @relation(name: "donation_created_by")
   updatedDonationRRequest DonationRequest[] @relation(name: "donation_updated_by")
+
+  createdEditRequest EditRequest[] @relation(name: "edit_request_created_by")
+  updatedEditRequest EditRequest[] @relation(name: "edit_request_updated_by")
+
   ActionLog ActionLog[] @relation(name: "action_created_by")
+
+  createdPublishRequest PublishRequest[] @relation(name: "publish_request_created_by")
+  updatedPublishRequest PublishRequest[] @relation(name: "publish_request_updated_by")
+
+  @@map("users")
 }
 
 model Profile {
@@ -60,28 +70,27 @@ model Profile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  firstName   String?
-  middleName  String?
-  lastName    String?
-  gender String?
+  firstName         String?
+  middleName        String?
+  lastName          String?
+  gender            String?
   localGovernmentId String?
-  dateOfBirth DateTime?
-  homeAddress String?
-  maritalStatus String?
-  phoneNumber  String?
-  picture     String?
-  identities Identity[]
-  userId     String     @unique
-  user       User       @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth       DateTime?
+  homeAddress       String?
+  maritalStatus     String?
+  phoneNumber       String?
+  picture           String?
+  identities        Identity[]
+  userId            String     @unique
+  user              User       @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
 
   createdByUserId String?
-  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "profile_created_by")
+  createdBy       User?            @relation(fields: [createdByUserId], references: [id], name: "profile_created_by")
   updatedByUserId String?
-  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "profile_updated_by")
-  localGovernment           LocalGovernment?    @relation(fields: [localGovernmentId], references: [id])
+  updatedBy       User?            @relation(fields: [updatedByUserId], references: [id], name: "profile_updated_by")
+  localGovernment LocalGovernment? @relation(fields: [localGovernmentId], references: [id])
 
   @@map("profiles")
-
 }
 
 model Role {
@@ -140,213 +149,281 @@ model Identity {
 }
 
 model State {
-  id                String             @id @default(uuid())
-  name              String             @unique
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  localGovernments  LocalGovernment[]  @relation("StateToLocalGovernment")  
+  id               String            @id @default(uuid())
+  name             String            @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  localGovernments LocalGovernment[] @relation("StateToLocalGovernment")
 }
 
 model LocalGovernment {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
   stateId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   profile   Profile[]
-  state     State    @relation(fields: [stateId], references: [id], name: "StateToLocalGovernment")  
+  state     State     @relation(fields: [stateId], references: [id], name: "StateToLocalGovernment")
 }
 
-model EmployementDetails{
- id        String    @id @default(uuid())
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- employementStatus String
- natureOfJob  String
- annualIncome String
- employerName  String
- employerPhoneNumber  String
- employerAddress  String
- userId     String     @unique
- user       User       @relation("EmployementDetails", fields: [userId], references: [id], onDelete: Cascade)
+model EmploymentDetails {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  employmentStatus    String
+  natureOfJob         String
+  annualIncome        String
+  employerName        String
+  employerPhoneNumber String
+  employerAddress     String
+  userId              String   @unique
+  user                User     @relation("EmploymentDetails", fields: [userId], references: [id], onDelete: Cascade)
+}
 
+enum Status {
+  draft
+  pending
+  approved
+  rejected
+  deleted
 }
 
 model Orphan {
-  id                     String    @id @default(uuid())
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  isDeleted         String?        @default("not_deleted")
-  deletionReason    String?
-  trackingNumber         String
-  picture                String?
-  isAccepted             Boolean  @default(false)
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletionReason String?
+  picture        String?
+  status         Status   @default(draft)
 
-  schoolName String?
-  schoolStatus           Boolean?  
-  schoolAddress          String?
-  schoolContactPerson    String?
-  schoolContactPhone     String?
-  
+  schoolName          String?
+  schoolStatus        Boolean?
+  schoolAddress       String?
+  schoolContactPerson String?
+  schoolContactPhone  String?
+
   affidavitOfGuardianship String
-  createdByUserId        String?
-  userId                 String     @unique
-  updatedByUserId        String?
+  createdByUserId         String?
+  userId                  String  @unique
+  updatedByUserId         String?
 
-  user                   User       @relation("OrphanProfile", fields: [userId], references: [id], onDelete: Cascade)
-  createdBy              User?      @relation(fields: [createdByUserId], references: [id], name: "orphan_created_by")
-  updatedBy              User?      @relation(fields: [updatedByUserId], references: [id], name: "orphan_updated_by") 
+  user      User  @relation("OrphanProfile", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdByUserId], references: [id], name: "orphan_created_by")
+  updatedBy User? @relation(fields: [updatedByUserId], references: [id], name: "orphan_updated_by")
+
+  Request            Request[]            @relation("RequestOrphans")
+  SponsorshipRequest SponsorshipRequest[] @relation("SponsorshipRequestOrphans")
+
+  ActionLog ActionLog[]
 
   @@map("orphans")
-
-  Request Request[] @relation("RequestOrphans")
-  SponsorshipRequest SponsorshipRequest[] @relation("SponsorshipRequestOrphans")
 }
 
 model Request {
-  id                String      @id @default(uuid())
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  status            String
-  isApproved        Boolean     @default(false)
-  isDeleted         String?
-  deletionReason    String?
-  description       String  
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  status              String
+  isApproved          Boolean  @default(false)
+  isDeleted           String?
+  deletionReason      String?
+  description         String
   supportingDocuments String[]
-  createdByUserId   String?
-  updatedByUserId   String?
-  createdBy         User?       @relation(fields: [createdByUserId], references: [id], name: "request_created_by")
-  updatedBy         User?       @relation(fields: [updatedByUserId], references: [id], name: "request_updated_by")
+  createdByUserId     String?
+  updatedByUserId     String?
+  createdBy           User?    @relation(fields: [createdByUserId], references: [id], name: "request_created_by")
+  updatedBy           User?    @relation(fields: [updatedByUserId], references: [id], name: "request_updated_by")
 
-  needId            String
-  need              Need        @relation(fields: [needId], references: [id])
-  orphans           Orphan[]    @relation("RequestOrphans")  
+  needId   String
+  need     Need       @relation(fields: [needId], references: [id])
+  orphans  Orphan[]   @relation("RequestOrphans")
   Donation Donation[] @relation("RequestDonations")
-  
+
   @@map("requests")
 }
 
 model SponsorshipRequest {
-  id                String      @id @default(uuid())
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  deletedAt         DateTime?  
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  title             String
-  description       String  
-  targetAmount      Float      
-  amountReceived    Float       @default(0.0) 
-  deadline          DateTime    
-  status            String      @default("draft")
-  createdByUserId   String?
-  updatedByUserId   String?
-  createdBy         User?       @relation(fields: [createdByUserId], references: [id], name: "sponsorship_created_by")
-  updatedBy         User?       @relation(fields: [updatedByUserId], references: [id], name: "sponsorship_updated_by")
+  title           String
+  description     String
+  targetAmount    Float
+  amountReceived  Float    @default(0.0)
+  deadline        DateTime
+  status          String   @default("draft")
+  editRequested   Boolean  @default(false)
+  createdByUserId String?
+  updatedByUserId String?
+  createdBy       User?    @relation(fields: [createdByUserId], references: [id], name: "sponsorship_created_by")
+  updatedBy       User?    @relation(fields: [updatedByUserId], references: [id], name: "sponsorship_updated_by")
 
-  orphans           Orphan[]    @relation("SponsorshipRequestOrphans")  
-  donations         Donation[]  @relation("SponsorshipRequestDonations")
-  ActionLog ActionLog[]
+  orphans            Orphan[]             @relation("SponsorshipRequestOrphans")
+  donations          Donation[]           @relation("SponsorshipRequestDonations")
+  ActionLog          ActionLog[]
   SupportingDocument SupportingDocument[]
-  DonationRequest DonationRequest[]
+  DonationRequest    DonationRequest[]
+  EditRequest        EditRequest[]
+  PublishRequest     PublishRequest[]
+
   @@map("sponsorship_requests")
 }
 
 model ActionLog {
-  id                  String   @id @default(uuid())
-  createdAt           DateTime @default(now())
-  actionType          String      
-  fromStatus          String     
-  toStatus            String     
-  reason              String?    
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sponsorshipRequestId String   
-  SponsorshipRequest  SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+  actionType String
+  fromStatus String
+  toStatus   String
+  reason     String?
 
-  createdByUserId     String?
-  createdBy           User?    @relation(fields: [createdByUserId], references: [id], name: "action_created_by")
+  Orphan   Orphan? @relation(fields: [orphanId], references: [id])
+  orphanId String?
+
+  sponsorshipRequestId String?
+  SponsorshipRequest   SponsorshipRequest? @relation(fields: [sponsorshipRequestId], references: [id])
+
+  editRequestId String?
+  EditRequest   EditRequest? @relation(fields: [editRequestId], references: [id])
+
+  publishRequestId String?
+  PublishRequest   PublishRequest? @relation(fields: [publishRequestId], references: [id])
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "action_created_by")
 
   @@map("action_logs")
 }
 
 model SupportingDocument {
-  id                  String   @id @default(uuid())
-  createdAt           DateTime @default(now())
-  title               String   @default("")
-  description         String   @default("")
-  fileUrl             String
-  fileType             String
-  sponsorshipRequestId String  
-  SponsorshipRequest  SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+  id                   String             @id @default(uuid())
+  createdAt            DateTime           @default(now())
+  title                String             @default("")
+  description          String             @default("")
+  url                  String
+  isArchived           Boolean            @default(false)
+  sponsorshipRequestId String
+  SponsorshipRequest   SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
 
   @@map("supporting_documents")
 }
 
 model Need {
-  id                 String   @id @default(uuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  name               String   @unique
-  description        String?
-  additionalInfo     Json?
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  name                String   @unique
+  description         String?
+  additionalInfo      Json?
   supportiveDocuments String?
 
-  requests           Request[] @relation
+  requests Request[] @relation
 }
-model Donation {
-  id                    String     @id @default(uuid())
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
-  amountNeeded          Float
-  amountRecieved        Float      @default(0)
-  amountDonated         Float      @default(0)
-  
-  requestId             String @unique
-  request               Request    @relation("RequestDonations", fields: [requestId], references: [id])
-  
-  userId                String
-  user                  User       @relation("UserDonations", fields: [userId], references: [id])
-  
 
-  createdByUserId       String?
-  updatedByUserId       String?
-  createdBy             User?      @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
-  updatedBy             User?      @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
+model Donation {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  amountNeeded   Float
+  amountRecieved Float    @default(0)
+  amountDonated  Float    @default(0)
+
+  requestId String  @unique
+  request   Request @relation("RequestDonations", fields: [requestId], references: [id])
+
+  userId String
+  user   User   @relation("UserDonations", fields: [userId], references: [id])
+
+  createdByUserId String?
+  updatedByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
 
   SponsorshipRequest SponsorshipRequest[] @relation("SponsorshipRequestDonations")
 }
 
-
 model BankDetails {
-  id                String    @id @default(uuid())
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  accountNumber     String
-  accountName       String
-  bankName          String
-  
-  userId            String   
-  user              User    @relation(name: "UserBankDetails", fields: [userId], references: [id])
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  accountNumber String
+  accountName   String
+  bankName      String
+
+  userId String
+  user   User   @relation(name: "UserBankDetails", fields: [userId], references: [id])
 
   @@map("bank_details")
 }
 
 model DonationRequest {
-  id                    String     @id @default(uuid())
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
-  amountDonated         Float      @default(0)
-  remark                String?
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  amountDonated Float    @default(0)
+  remark        String?
 
-  paymentStatus         String      @default("pending") 
-  transactionReference  String?   @unique 
-  paymentGateway        String?  
+  paymentStatus        String  @default("pending")
+  transactionReference String? @unique
+  paymentGateway       String?
 
-  createdByUserId       String?
-  updatedByUserId       String?
-  createdBy             User? @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
-  updatedBy             User? @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
-  sponsorshipId         String
-  sponsorship           SponsorshipRequest @relation(fields: [sponsorshipId], references: [id])
+  createdByUserId String?
+  updatedByUserId String?
+  createdBy       User?              @relation(fields: [createdByUserId], references: [id], name: "donation_created_by")
+  updatedBy       User?              @relation(fields: [updatedByUserId], references: [id], name: "donation_updated_by")
+  sponsorshipId   String
+  sponsorship     SponsorshipRequest @relation(fields: [sponsorshipId], references: [id])
+}
 
+model EditRequest {
+  id String @id @default(uuid())
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  current Json
+  edit    Json
+
+  status Status @default(pending)
+  reason String
+
+  originalRequestId String?
+  originalRequest   EditRequest? @relation(fields: [originalRequestId], references: [id], name: "OriginalRequest")
+
+  derivedRequests EditRequest[] @relation(name: "OriginalRequest")
+
+  sponsorshipRequestId String?
+  sponsorshipRequest   SponsorshipRequest? @relation(fields: [sponsorshipRequestId], references: [id])
+
+  ActionLog ActionLog[]
+
+  createdByUserId String
+  updatedByUserId String?
+  createdBy       User    @relation(fields: [createdByUserId], references: [id], name: "edit_request_created_by")
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "edit_request_updated_by")
+}
+
+model PublishRequest {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status Status @default(pending)
+  reason String
+
+  sponsorshipRequestId String
+  SponsorshipRequest   SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+
+  ActionLog ActionLog[]
+
+  createdByUserId String
+  createdBy       User   @relation(fields: [createdByUserId], references: [id], name: "publish_request_created_by")
+
+  updatedByUserId String?
+  updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "publish_request_updated_by")
 }

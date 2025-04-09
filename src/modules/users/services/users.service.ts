@@ -1,16 +1,20 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
-import { Prisma, Profile, User } from '@prisma/client';
-import { RolesPermissionsService } from './roles-permissions.service';
+import { Profile, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from 'prisma/prisma.service';
+import { CreateProfileDto } from '../dtos/profile/create-user-profile.dto';
 import { CreateUserDto } from '../dtos/user/create-user.dto';
 import { RoleNotFoundException } from '../exceptions/RoleNotFound.exception';
-import { UserType } from '../types/user.type';
-import { PrismaService } from 'prisma/prisma.service';
 import { UserAlreadyExistsException } from '../exceptions/UserAlreadyExists.exception';
 import { UserNotFoundException } from '../exceptions/UserNotFound.exception';
-import { CreateProfileDto } from '../dtos/profile/create-user-profile.dto';
 import { UpdateUserParams } from '../types';
+import { UserType } from '../types/user.type';
+import { RolesPermissionsService } from './roles-permissions.service';
 
 @Injectable()
 export class UsersService {
@@ -25,25 +29,25 @@ export class UsersService {
         email: userDetails.email,
       },
     });
-  
+
     if (user) {
       throw new UserAlreadyExistsException();
     }
-  
+
     const roleName = userDetails.role;
-  
+
     const role = await this.prisma.role.findUnique({
       where: {
         roleName,
       },
     });
-  
+
     if (!role) {
       throw new RoleNotFoundException(`Role '${roleName}' not found`);
     }
-  
+
     const hashedPassword = await bcrypt.hash(userDetails.password, 10);
-  
+
     const profileData = userDetails.profile
       ? {
           create: {
@@ -54,7 +58,7 @@ export class UsersService {
           },
         }
       : undefined;
-  
+
     return this.prisma.user.create({
       data: {
         email: userDetails.email,
@@ -78,22 +82,22 @@ export class UsersService {
 
   async createEmploymentAndProfile(
     createProfileDto: CreateProfileDto,
-    userId: string
+    userId: string,
   ) {
     // Find the local government by name to get its ID
     const localGovernment = await this.prisma.localGovernment.findFirst({
       where: { name: createProfileDto.localGovernment },
     });
-  
+
     if (!localGovernment) {
       throw new ConflictException('Local government not found');
     }
-  
+
     // Upsert employment details
-    const employmentDetails = await this.prisma.employementDetails.upsert({
+    const employmentDetails = await this.prisma.employmentDetails.upsert({
       where: { userId: userId },
       update: {
-        employementStatus: createProfileDto.employementStatus,
+        employmentStatus: createProfileDto.employementStatus,
         natureOfJob: createProfileDto.natureOfJob,
         annualIncome: createProfileDto.annualIncome,
         employerName: createProfileDto.employerName,
@@ -101,7 +105,7 @@ export class UsersService {
         employerAddress: createProfileDto.employerAddress,
       },
       create: {
-        employementStatus: createProfileDto.employementStatus,
+        employmentStatus: createProfileDto.employementStatus,
         natureOfJob: createProfileDto.natureOfJob,
         annualIncome: createProfileDto.annualIncome,
         employerName: createProfileDto.employerName,
@@ -112,7 +116,7 @@ export class UsersService {
         },
       },
     });
-  
+
     // Upsert profile details
     const profile = await this.prisma.profile.upsert({
       where: { userId: userId },
@@ -140,7 +144,7 @@ export class UsersService {
         },
       },
     });
-  
+
     // Upsert identity details
     const identity = await this.prisma.identity.upsert({
       where: {
@@ -162,10 +166,10 @@ export class UsersService {
         },
       },
     });
-  
+
     return { employmentDetails, profile, identity };
   }
-  
+
   async findUserByPhoneNumber(phoneNumber: string) {
     return this.prisma.user.findFirst({
       where: {
@@ -203,7 +207,6 @@ export class UsersService {
       },
     });
   }
-  
 
   async findUserById(id: string): Promise<User> {
     return this.prisma.user.findUnique({
@@ -216,8 +219,6 @@ export class UsersService {
       },
     });
   }
-
- 
 
   async updateUser(
     userId: string,
@@ -389,7 +390,6 @@ export class UsersService {
     });
   }
 
-
   async findAllAdmins() {
     const admins = await this.prisma.user.findMany({
       where: {
@@ -400,7 +400,7 @@ export class UsersService {
         },
       },
       include: {
-        profile: { 
+        profile: {
           select: {
             firstName: true,
             middleName: true,
@@ -409,10 +409,10 @@ export class UsersService {
         },
       },
     });
-      // Return the admins with their IDs and profile information
-    return admins.map(admin => ({
-      id: admin.id, 
-      profile: admin.profile, 
+    // Return the admins with their IDs and profile information
+    return admins.map((admin) => ({
+      id: admin.id,
+      profile: admin.profile,
     }));
   }
 }
