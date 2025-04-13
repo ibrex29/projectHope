@@ -63,6 +63,7 @@ model User {
   updatedPublishRequest PublishRequest[] @relation(name: "publish_request_updated_by")
 
   @@map("users")
+  Transaction Transaction[]
 }
 
 model Profile {
@@ -269,6 +270,7 @@ model SponsorshipRequest {
   PublishRequest     PublishRequest[]
 
   @@map("sponsorship_requests")
+  Transaction Transaction[]
 }
 
 model ActionLog {
@@ -426,4 +428,24 @@ model PublishRequest {
 
   updatedByUserId String?
   updatedBy       User?   @relation(fields: [updatedByUserId], references: [id], name: "publish_request_updated_by")
+}
+
+enum PaymentStatus {
+  notPaid
+  paid
+  pending
+  failed
+}
+
+model Transaction {
+  id                    String @id @default(uuid())
+  transactionReference  String? @unique
+  paymentLink           String?
+  transactionStatus     String?
+  status                PaymentStatus       @default(notPaid)
+
+  sponsorshipRequestId  String
+  sponsorshipRequest    SponsorshipRequest  @relation(fields: [sponsorshipRequestId], references: [id])
+  userId                String
+  user                  User                @relation(fields: [userId], references: [id])
 }

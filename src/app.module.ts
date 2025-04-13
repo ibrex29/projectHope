@@ -21,6 +21,7 @@ import { OrphanModule } from './modules/orphan/orphan.module';
 import { SponsorModule } from './modules/sponsor/sponsor.module';
 import { UsersModule } from './modules/users/users.module';
 import { UploadModule } from './upload/upload.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
 @Module({
@@ -53,14 +54,13 @@ console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
       }),
       inject: [ConfigService],
     }),
-    PrismaModule,
     UsersModule,
     AuthModule,
-    AnalyticsModule,
     OrphanModule,
     GuardianModule,
     SponsorModule,
     UploadModule,
+    TransactionsModule
   ],
   controllers: [AppController],
   providers: [AppService],
