@@ -1,4 +1,9 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProfileDto {
@@ -67,7 +72,7 @@ export class CreateProfileDto {
   phoneNumber?: string;
 
   @ApiProperty({
-    description: 'URL to the user\'s picture.',
+    description: "URL to the user's picture.",
     example: 'https://example.com/picture.jpg',
   })
   @IsString()
@@ -76,7 +81,7 @@ export class CreateProfileDto {
 
   @ApiProperty({
     description: 'Employment status of the user (employed, false otherwise).',
-    example: "employed",
+    example: 'employed',
   })
   @IsNotEmpty()
   employementStatus: string;
@@ -120,7 +125,7 @@ export class CreateProfileDto {
   @IsString()
   @IsNotEmpty()
   employerAddress: string;
-  
+
   @ApiProperty({
     description: 'ID Name ',
     example: 'NIN',
@@ -137,5 +142,3 @@ export class CreateProfileDto {
   @IsNotEmpty()
   number: string;
 }
-
-

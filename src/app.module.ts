@@ -21,6 +21,7 @@ import { OrphanModule } from './modules/orphan/orphan.module';
 import { SponsorModule } from './modules/sponsor/sponsor.module';
 import { UsersModule } from './modules/users/users.module';
 import { UploadModule } from './upload/upload.module';
+import { ActionModule } from './action/action.module';
 
 console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
 @Module({
@@ -61,6 +62,7 @@ console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
     GuardianModule,
     SponsorModule,
     UploadModule,
+    ActionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

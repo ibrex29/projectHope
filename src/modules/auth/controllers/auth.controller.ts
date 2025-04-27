@@ -4,29 +4,25 @@ import {
   Controller,
   Get,
   Headers,
-  NotImplementedException,
-  Patch,
   Post,
   Request,
   UseGuards,
   Version,
 } from '@nestjs/common';
 
-import { PasswordService } from '../password.service';
-import { PasswordResetDto } from '../dtos/reset-password.dto';
-import { ValidatePasswordResetDto } from '../dtos/validate-reset-password.dto';
-import { EmailLoginDto } from '../dtos/email-login.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ChangePasswordDTO } from '../dtos/change-password.dto';
-import { LocalAuthGuard } from '../guard/local-auth.guard';
 import { Public } from 'src/common/constants/routes.constant';
-import { AuthService } from '../auth.service';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
+import { AuthService } from '../auth.service';
+import { ChangePasswordDTO } from '../dtos/change-password.dto';
+import { EmailLoginDto } from '../dtos/email-login.dto';
+import { LocalAuthGuard } from '../guard/local-auth.guard';
+import { PasswordService } from '../password.service';
 @ApiTags('Authentication')
 @ApiBearerAuth()
 @Controller('auth')

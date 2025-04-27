@@ -1,7 +1,14 @@
-import { JwtPayload } from "src/modules/auth/types";
-import { BLACKLISTED_TOKEN, JWT_ACCESS_EXPIRY, JWT_ACCESS_SECRET, JWT_REFRESH_EXPIRY, JWT_REFRESH_SECRET, MILLISECONDS_PER_SECOND } from "../constants";
-import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { JwtPayload } from 'src/modules/auth/types';
+import {
+  BLACKLISTED_TOKEN,
+  JWT_ACCESS_EXPIRY,
+  JWT_ACCESS_SECRET,
+  JWT_REFRESH_EXPIRY,
+  JWT_REFRESH_SECRET,
+  MILLISECONDS_PER_SECOND,
+} from '../constants';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { JwtService } from '@nestjs/jwt';
 import { Cache } from 'cache-manager';

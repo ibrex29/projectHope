@@ -76,19 +76,3 @@ export class UpdateSponsorshipRequestDto extends PartialType(
 export class UpdateSupportingDocumentDto extends PartialType(
   SupportingDocumentDto,
 ) {}
-
-export class RequestSponsorshipRequestEditDto {
-  @ApiProperty({
-    type: UpdateSponsorshipRequestDto,
-    description: 'The edit payload for the sponsorship request.',
-    required: true,
-  })
-  edit: UpdateSponsorshipRequestDto;
-
-  @ApiProperty({
-    example: 'I need to change the deadline',
-    description: 'The reason for requesting the edit.',
-    required: true,
-  })
-  reason: string;
-}

@@ -1,18 +1,18 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Request,
-    Param,
-    UseGuards,
-    Patch,
-    Delete,
-  } from '@nestjs/common';
-  import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-  import { JwtAuthGuard } from 'src/modules/auth/guard/jwt-auth.guard';
-  import { RequestRemovalDto } from '../dto/request-removal.dto';
-  import { Request as PrismaRequest } from '@prisma/client';
+  Controller,
+  Get,
+  Post,
+  Body,
+  Request,
+  Param,
+  UseGuards,
+  Patch,
+  Delete,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/modules/auth/guard/jwt-auth.guard';
+import { RequestRemovalDto } from '../dto/request-removal.dto';
+import { Request as PrismaRequest } from '@prisma/client';
 import { RequestService } from '../request.service';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
 import { UpdateNeedDto } from '../dto/need/update-need.dto';
@@ -38,18 +38,21 @@ export class RequestController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('deletion-request')
-  async removeRequest(@Body() dto: RequestRemovalDto,
-  @User('userId') userId: string
-): Promise<PrismaRequest> {
-  return  this.requestService.needRequestRemoval(dto, userId);
+  async removeRequest(
+    @Body() dto: RequestRemovalDto,
+    @User('userId') userId: string,
+  ): Promise<PrismaRequest> {
+    return this.requestService.needRequestRemoval(dto, userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete()
-  async deleteNeedRequest(@Param('id') requestId: string,  @User('userId') userId: string,){
+  async deleteNeedRequest(
+    @Param('id') requestId: string,
+    @User('userId') userId: string,
+  ) {
     return this.requestService.deleteNeedRequest(requestId, userId);
   }
-
 }
 @ApiBearerAuth()
 @ApiTags('needs mananagement')

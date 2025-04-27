@@ -45,8 +45,6 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
-
-
   @ApiPropertyOptional({
     description: 'Profile information of the user',
     type: CreateProfileDto,

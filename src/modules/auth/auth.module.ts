@@ -19,7 +19,6 @@ import { UsersModule } from '../users/users.module';
 import { RefreshTokenStrategy } from './strategy/refresh-token.strategy';
 import { PrismaService } from 'prisma/prisma.service';
 
-
 @Module({
   imports: [PassportModule, UsersModule],
   controllers: [AuthController],

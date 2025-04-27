@@ -4,9 +4,8 @@ import { UserType } from '../users/types/user.type';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(
-    private prisma: PrismaService,){}
- 
+  constructor(private prisma: PrismaService) {}
+
   async countOrphansSponsorsAndGuardians() {
     const [orphansCount, sponsorsCount, guardiansCount] = await Promise.all([
       this.prisma.user.count({
@@ -37,12 +36,11 @@ export class AnalyticsService {
         },
       }),
     ]);
-  
+
     return {
       orphansCount,
       sponsorsCount,
       guardiansCount,
     };
   }
-  
 }

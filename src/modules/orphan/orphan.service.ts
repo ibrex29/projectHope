@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Orphan, Status } from '@prisma/client';
+import { Action, Orphan, Status } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
 import { UserType } from '../users/types/user.type';
@@ -200,14 +200,14 @@ export class OrphanService {
     return this.prisma.orphan.update({
       where: { id: orphanId },
       data: {
-        status: 'rejected',
+        status: Status.rejected,
         updatedByUserId: userId,
-        ActionLog: {
+        actionLogs: {
           create: {
-            fromStatus: 'pending',
-            toStatus: 'rejected',
-            actionType: 'rejection',
-            reason: reason,
+            fromStatus: Status.pending,
+            toStatus: Status.rejected,
+            action: Action.reject,
+            comment: reason,
           },
         },
       },
@@ -236,7 +236,7 @@ export class OrphanService {
               },
             },
           },
-          ActionLog: true,
+          actionLogs: true,
         },
       });
     } catch (error) {
@@ -258,7 +258,7 @@ export class OrphanService {
               profile: true,
             },
           },
-          ActionLog: true,
+          actionLogs: true,
         },
       });
 

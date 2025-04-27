@@ -6,6 +6,6 @@ import { PaymentService } from './payment.service';
 
 @Module({
   controllers: [SponsorController],
-  providers: [SponsorService,PrismaService,PaymentService],
+  providers: [SponsorService, PrismaService, PaymentService],
 })
 export class SponsorModule {}

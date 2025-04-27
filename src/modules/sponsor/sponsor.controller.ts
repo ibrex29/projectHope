@@ -1,28 +1,30 @@
-import { Controller, Get, Post, Body,  Req, Res, Query, Headers} from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { InitializePaymentDto } from "../guardian/dto/initialize-payment.dto";
-import { SponsorService } from "./sponsor.service";
-import { PaymentService } from "./payment.service";
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
+import { InitializePaymentDto } from '../guardian/dto/initialize-payment.dto';
+import { PaymentService } from './payment.service';
+import { SponsorService } from './sponsor.service';
 
-
-@ApiTags("sponsor")
+@ApiTags('sponsor')
 @ApiBearerAuth()
 @Controller({ path: 'sponsor', version: '1' })
 export class SponsorController {
-  constructor
-      (private readonly sponsorService: SponsorService,
-      private readonly paymentService: PaymentService,
+  constructor(
+    private readonly sponsorService: SponsorService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   @Post('Donate')
   @ApiTags('donations')
-  async initializePayment(@Body() body: InitializePaymentDto,@User('email')email:string) {
-      return await this.paymentService.initializePayment(
-          body.amount,
-          email,
-          body.donationId,
-      );
+  async initializePayment(
+    @Body() body: InitializePaymentDto,
+    @User('email') email: string,
+  ) {
+    return await this.paymentService.initializePayment(
+      body.amount,
+      email,
+      body.donationId,
+    );
   }
 
   @Get('verify')
@@ -45,7 +47,4 @@ export class SponsorController {
   //     res.status(400).json({ message: 'Webhook processing failed' });
   //   }
   // }
-
-
-
 }
