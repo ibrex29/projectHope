@@ -1,13 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { UpdateDonationDto } from './dto/create-donation.dto';
-import { UserType } from '../users/types/user.type';
-import { User } from '@prisma/client'
-import { CreateSponsorshipRequestDto } from '../guardian/dto/create-sponsorship-request.dto';
-import { CreateDonationDto } from './dto/donation/create-donation.dto';
 @Injectable()
 export class SponsorService {
-  constructor(private readonly prisma:PrismaService){}
+  constructor(private readonly prisma: PrismaService) {}
 
   // async createDonationByRequest(data: UpdateDonationDto,userId:string) {
   //   try {
@@ -29,7 +24,7 @@ export class SponsorService {
   //       },
   //       data: {
   //         amountDonated: {
-  //           increment: data.amountToDonate, 
+  //           increment: data.amountToDonate,
   //         },
   //         createdByUserId:userId,
   //         updatedByUserId:userId
@@ -56,7 +51,7 @@ export class SponsorService {
   //         updatedBy: true,
   //       },
   //     };
-  
+
   //     return await this.prisma.user.findMany({
   //       where: {
   //         isDeleted: false,
@@ -86,13 +81,13 @@ export class SponsorService {
   //           },
   //           user: {
   //             include: {
-  //               profile: true, 
+  //               profile: true,
   //               EmployementDetails:true
   //             },
   //           },
   //         },
   //       });
-    
+
   //       return donations;
   //     } catch (error) {
   //       throw new Error(`Failed to retrieve donations for user: ${error.message}`);
@@ -104,23 +99,23 @@ export class SponsorService {
   //       amountDonated: createDonationDto.amountDonated,
   //       remark: createDonationDto.remark,
   //       createdByUserId: userId,
-  //       SponsorshipRequest: {  
+  //       SponsorshipRequest: {
   //         connect: createDonationDto.sponsorshipRequestIds.map((id) => ({ id })),
   //       },
   //     },
   //   });
   // }
-  
+
   // async getUserDonations(userId: string) {
-    // return await this.prisma.donationRequest.findMany({
-    //   where: { createdByUserId: userId },
-    //   include: {
-    //     SponsorshipRequest: {
-    //       include: {
-    //         orphans: true, 
-    //       },
-    //     }, 
-    //   },
-    // });
+  // return await this.prisma.donationRequest.findMany({
+  //   where: { createdByUserId: userId },
+  //   include: {
+  //     SponsorshipRequest: {
+  //       include: {
+  //         orphans: true,
+  //       },
+  //     },
+  //   },
+  // });
   // }
-}  
+}

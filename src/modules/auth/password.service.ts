@@ -1,13 +1,11 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/services/users.service';
-import { JwtTokenService } from 'src/common/token/jwt-token.service';
-import { CryptoService } from 'src/common/crypto/crypto.service';
 import { PrismaService } from 'prisma/prisma.service';
 import { SITE_URL } from 'src/common/constants';
-import { UserNotFoundException } from '../users/exceptions/UserNotFound.exception';
-import { InvalidResetTokenException } from './exceptions/InvalidResetToken.exception';
+import { CryptoService } from 'src/common/crypto/crypto.service';
+import { JwtTokenService } from 'src/common/token/jwt-token.service';
+import { UsersService } from '../users/services/users.service';
 @Injectable()
 export class PasswordService {
   private readonly siteUrl;

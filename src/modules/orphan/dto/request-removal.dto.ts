@@ -13,7 +13,8 @@ export class RequestRemovalDto {
 
   @ApiProperty({
     description: 'The reason for rejecting the request',
-    example: 'The request does not meet the necessary requirements for approval.',
+    example:
+      'The request does not meet the necessary requirements for approval.',
   })
   @IsNotEmpty()
   @IsString()

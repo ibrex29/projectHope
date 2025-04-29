@@ -12,7 +12,12 @@ import {
   PaystackVerifyTransactionResponseDto,
   PaystackWebhookDto,
 } from './dto/paystack.dto';
-import { PAYSTACK_TRANSACTION_INI_URL, PAYSTACK_TRANSACTION_VERIFY_BASE_URL, PAYSTACK_SUCCESS_STATUS, PAYSTACK_WEBHOOK_CRYPTO_ALGO } from 'src/common/constants';
+import {
+  PAYSTACK_TRANSACTION_INI_URL,
+  PAYSTACK_TRANSACTION_VERIFY_BASE_URL,
+  PAYSTACK_SUCCESS_STATUS,
+  PAYSTACK_WEBHOOK_CRYPTO_ALGO,
+} from 'src/common/constants';
 import { PrismaService } from 'prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
 
@@ -21,9 +26,9 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
-  async initializeTransaction(dto: InitializeTransactionDto,userId: string) {
+  async initializeTransaction(dto: InitializeTransactionDto, userId: string) {
     const { sponsorshipRequestId } = dto;
 
     const sponsorshipRequest = await this.prisma.sponsorshipRequest.findUnique({
@@ -44,10 +49,9 @@ export class TransactionsService {
       include: {
         profile: true,
       },
-    }); 
-  
+    });
+
     if (!user || !user.email || !user.profile) return null;
-  
     const metadata: PaystackMetadata = {
       user_id: userId,
       product_id: sponsorshipRequest.id,
@@ -109,8 +113,7 @@ export class TransactionsService {
       },
     });
   }
-
-
+  
   async verifyTransaction(dto: PaystackCallbackDto) {
     if (!dto.reference) {
       throw new BadRequestException('Transaction reference is required.');
@@ -138,9 +141,9 @@ export class TransactionsService {
       console.error('Transaction verification failed:', error);
       return null;
     }
-  
+
     const paymentConfirmed = transactionStatus === PAYSTACK_SUCCESS_STATUS;
-  
+
     return await this.prisma.transaction.update({
       where: { transactionReference: dto.reference },
       data: {

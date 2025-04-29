@@ -1,4 +1,3 @@
-
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { FetchDTO } from 'src/common/dto';
 

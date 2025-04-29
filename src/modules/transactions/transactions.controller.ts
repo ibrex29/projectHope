@@ -24,7 +24,10 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post('/initialize')
-  async initializeTransaction(@Body() dto: InitializeTransactionDto, @User('userId') userId: string) {
+  async initializeTransaction(
+    @Body() dto: InitializeTransactionDto,
+    @User('userId') userId: string,
+  ) {
     return await this.transactionsService.initializeTransaction(dto, userId);
   }
 

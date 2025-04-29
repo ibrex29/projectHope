@@ -1,8 +1,7 @@
-import { CreatePermissionDto } from "../dtos/roles-permissions/create-permission.dto";
-import { CreateRoleDto } from "../dtos/roles-permissions/create-role.dto";
-import { UpdatePermissionDto } from "../dtos/roles-permissions/update-permission.dto";
-import { UpdateRoleDto } from "../dtos/roles-permissions/update-role.dto";
-
+import { CreatePermissionDto } from '../dtos/roles-permissions/create-permission.dto';
+import { CreateRoleDto } from '../dtos/roles-permissions/create-role.dto';
+import { UpdatePermissionDto } from '../dtos/roles-permissions/update-permission.dto';
+import { UpdateRoleDto } from '../dtos/roles-permissions/update-role.dto';
 
 export interface IRolesPermissionsService {
   // Role methods

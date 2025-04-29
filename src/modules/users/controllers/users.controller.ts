@@ -30,19 +30,15 @@ export class UsersController {
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
   }
-  
-  @Post("account-setup")
+
+  @Post('account-setup')
   async createEmploymentAndProfile(
     @Body() body: CreateProfileDto,
-    @Request() req
+    @Request() req,
   ) {
-  
-    return this.userService.createEmploymentAndProfile(    
-      body,
-      req.user?.userId
-    );
+    return this.userService.createEmploymentAndProfile(body, req.user?.userId);
   }
-  
+
   @Version('1')
   @Get('/:userId')
   async getUser(@Param('userId', ParseUUIDPipe) userId: string) {
@@ -90,5 +86,4 @@ export class UsersController {
   async deleteUserById(@Param('userId', ParseUUIDPipe) userId: string) {
     await this.userService.deleteUser(userId);
   }
-
 }

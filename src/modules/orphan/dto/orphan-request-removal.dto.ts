@@ -13,7 +13,8 @@ export class OrphanRemovalDto {
 
   @ApiProperty({
     description: 'The reason for deleting the orphan',
-    example: 'The orphan does not meet the necessary requirements for approval.',
+    example:
+      'The orphan does not meet the necessary requirements for approval.',
   })
   @IsNotEmpty()
   @IsString()

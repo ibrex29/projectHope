@@ -10,7 +10,7 @@ export class CreateNeedDto {
   description?: string;
 
   @IsOptional()
-  additionalInfo?: Record<string, any>; 
+  additionalInfo?: Record<string, any>;
 
   @IsOptional()
   @IsString()

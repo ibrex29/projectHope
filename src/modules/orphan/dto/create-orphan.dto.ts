@@ -1,10 +1,17 @@
 // create-orphan.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsDateString, IsNotEmpty, IsUUID, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsUUID,
+  IsDate,
+} from 'class-validator';
 
 export class CreateOrphanDto {
-
   @ApiProperty({
     description: 'Picture URL of the orphan.',
     example: 'http://example.com/picture.jpg',

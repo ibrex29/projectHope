@@ -8,7 +8,6 @@ export type JwtPayload = {
   lastName?: string;
 };
 
-
 export type SessionUser = {
   userId: string;
   phoneNumber: string;

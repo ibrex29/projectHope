@@ -49,5 +49,5 @@
 //   @IsString()
 //   @IsNotEmpty()
 //   employerAddress: string;
-  
+
 // }

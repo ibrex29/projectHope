@@ -6,20 +6,30 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Status } from '@prisma/client';
 import { Public, Role } from 'src/common/constants/routes.constant';
 import { User } from 'src/common/decorators/param-decorator/User.decorator';
+import {
+  OrphanSnapshotDto,
+  SponsorshipRequestSnapshotDto,
+} from 'src/dto/snapshot.dto';
+import { ActionDto } from '../../dto/action.dto';
 import { RolesGuard } from '../auth/guard/role.guard';
-import { RejectOrphanDto } from '../orphan/dto/reject-orphan.dto';
-import { RejectSponsorshipRequestDto } from '../sponsor/dto/reject-spoonsoorship.dto';
 import { PaymentService } from '../sponsor/payment.service';
 import { UserType } from '../users/types/user.type';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import {
   CreateSponsorshipRequestDto,
-  RequestSponsorshipRequestEditDto,
   UpdateSponsorshipRequestDto,
   UpdateSupportingDocumentDto,
 } from './dto/create-sponsorship-request.dto';
@@ -62,6 +72,7 @@ export class GuardianController {
 @ApiBearerAuth()
 @ApiTags('Sponsorship Requests')
 @Controller('sponsorship-requests')
+@ApiExtraModels(OrphanSnapshotDto, SponsorshipRequestSnapshotDto)
 export class SponsorshipController {
   constructor(
     private readonly guardianService: GuardianService,
@@ -74,7 +85,7 @@ export class SponsorshipController {
     @Body() dto: CreateSponsorshipRequestDto,
     @User('userId') userId: string,
   ) {
-    return this.guardianService.create(dto, userId);
+    return this.guardianService.createSponsorshipRequest(dto, userId);
   }
 
   @Put(':id')
@@ -124,9 +135,13 @@ export class SponsorshipController {
   async closeSponsorship(
     @Param('id') id: string,
     @User('userId') userId: string,
-    @Body() dto: RejectSponsorshipRequestDto,
+    @Body() dto: ActionDto,
   ) {
-    return this.guardianService.closeSponsorshipRequest(id, userId, dto.reason);
+    return this.guardianService.closeSponsorshipRequest(
+      id,
+      userId,
+      dto.comment,
+    );
   }
   1;
   @Post(':id/reject')
@@ -134,12 +149,12 @@ export class SponsorshipController {
   async rejectSponsorship(
     @Param('id') id: string,
     @User('userId') userId: string,
-    @Body() dto: RejectSponsorshipRequestDto,
+    @Body() dto: ActionDto,
   ) {
     return this.guardianService.rejectSponsorshipRequest(
       id,
       userId,
-      dto.reason,
+      dto.comment,
     );
   }
 
@@ -163,8 +178,13 @@ export class SponsorshipController {
   }
 
   @Get()
-  async getAll() {
-    return this.guardianService.getAllSponsorshipRequests();
+  @ApiQuery({
+    name: 'status',
+    enum: Status,
+    required: false,
+  })
+  async get(@Query('status') status: Status) {
+    return this.guardianService.getAllSponsorshipRequests(status);
   }
 
   @Get('mine')
@@ -172,85 +192,9 @@ export class SponsorshipController {
     return this.guardianService.getMySponsorshipRequests(userId);
   }
 
-  @Get('edit-requests')
-  @ApiOperation({ summary: 'Get all edit requests for sponsorship requests' })
-  async getEditRequests() {
-    return this.guardianService.getSponsorshipRequestEditRequests();
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a sponsorship request by ID' })
   async getById(@Param('id') id: string) {
     return this.guardianService.getSponsorshipRequestById(id);
-  }
-
-  @Post(':id/request-edit')
-  @ApiOperation({ summary: 'Request an edit for a sponsorship request' })
-  async requestEdit(
-    @Param('id') id: string,
-    @Body() dto: RequestSponsorshipRequestEditDto,
-    @User('userId') userId: string,
-  ) {
-    return this.guardianService.requestSponsorshipRequestEdit(id, dto, userId);
-  }
-
-  @Post(':id/approve-edit')
-  @ApiOperation({
-    summary: 'Approve an edit request for a sponsorship request',
-  })
-  async approveEdit(@Param('id') id: string) {
-    return this.guardianService.approveSponsorshipRequestEdit(id);
-  }
-
-  @Post(':id/reject-edit')
-  @ApiOperation({ summary: 'Reject an edit request for a sponsorship request' })
-  async rejectEdit(
-    @Param('id') id: string,
-    @Body() dto: RejectOrphanDto,
-    @User('userId') userId: string,
-  ) {
-    return this.guardianService.rejectSponsorshipRequestEdit(
-      id,
-      userId,
-      dto.reason,
-    );
-  }
-
-  @Post(':id/request-publish')
-  @ApiOperation({ summary: 'Request a sponsorship request to be published' })
-  async requestPublish(
-    @Param('id') id: string,
-    @User('userId') userId: string,
-    @Body() dto: RejectSponsorshipRequestDto,
-  ) {
-    return this.guardianService.requestSponsorshipRequestPublish(
-      id,
-      userId,
-      dto.reason,
-    );
-  }
-
-  @Get('publish-requests')
-  async getPublishRequests() {
-    return this.guardianService.getPublishRequests();
-  }
-
-  @Post(':id/approve-publish-request')
-  @ApiOperation({ summary: 'Approve a publish request' })
-  async approvePublishRequest(
-    @Param('id') id: string,
-    @User('userId') userId: string,
-  ) {
-    return this.guardianService.approvePublishRequest(id, userId);
-  }
-
-  @Post(':id/reject-publish-request')
-  @ApiOperation({ summary: 'Reject a publish request' })
-  async rejectPublishRequest(
-    @Param('id') id: string,
-    @User('userId') userId: string,
-    @Body() dto: RejectSponsorshipRequestDto,
-  ) {
-    return this.guardianService.rejectPublishRequest(id, userId, dto.reason);
   }
 }

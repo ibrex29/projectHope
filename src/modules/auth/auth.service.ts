@@ -11,7 +11,7 @@ export class AuthService {
     private jwtTokenService: JwtTokenService,
     private cryptoService: CryptoService,
   ) {}
- 
+
   async validateUser(email: string, password: string) {
     const user = await this.userService.findUserByEmail(email);
     const isMatch =
@@ -42,7 +42,6 @@ export class AuthService {
       profile: payload,
     };
   }
-  
 
   async logout(token: string) {
     return this.jwtTokenService.blacklist(token);

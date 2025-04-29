@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SponsorshipRequest, Status, User } from '@prisma/client';
+import { Action, SponsorshipRequest, Status, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'prisma/prisma.service';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
@@ -8,11 +8,9 @@ import { UserType } from '../users/types/user.type';
 import { CreateGuardianDto } from './dto/create-guardian.dto';
 import {
   CreateSponsorshipRequestDto,
-  RequestSponsorshipRequestEditDto,
   UpdateSponsorshipRequestDto,
   UpdateSupportingDocumentDto,
 } from './dto/create-sponsorship-request.dto';
-import { ActionType, SponsorshipStatus } from './dto/types.enum';
 import { UpdateGuardianDto } from './dto/update-guardian.dto';
 
 @Injectable()
@@ -223,7 +221,10 @@ export class GuardianService {
       .sort((a, b) => b.orphanCount - a.orphanCount);
   }
 
-  async create(dto: CreateSponsorshipRequestDto, userId: string) {
+  async createSponsorshipRequest(
+    dto: CreateSponsorshipRequestDto,
+    userId: string,
+  ) {
     return await this.prisma.sponsorshipRequest.create({
       data: {
         createdByUserId: userId,
@@ -231,11 +232,11 @@ export class GuardianService {
         description: dto.description,
         targetAmount: dto.targetAmount,
         deadline: dto.deadline,
-        status: SponsorshipStatus.DRAFT,
+        status: Status.draft,
         orphans: {
           connect: dto.orphans.map((orphanId) => ({ id: orphanId })),
         },
-        SupportingDocument:
+        supportingDocuments:
           dto.supportingDocuments && dto.supportingDocuments.length > 0
             ? {
                 create: dto.supportingDocuments.map((doc) => ({
@@ -247,26 +248,30 @@ export class GuardianService {
             : undefined,
       },
       include: {
-        SupportingDocument: true,
+        supportingDocuments: true,
       },
     });
   }
 
-  async updateRequest(id: string, dto: UpdateSponsorshipRequestDto) {
+  async updateRequest(
+    id: string,
+    dto: UpdateSponsorshipRequestDto,
+    status?: Status,
+  ) {
     return await this.prisma.$transaction(async (tx) => {
       const existingRequest = await tx.sponsorshipRequest.findUnique({
         where: { id },
-        include: { SupportingDocument: true },
+        include: { supportingDocuments: true },
       });
       if (!existingRequest) {
         throw new NotFoundException('Sponsorship request not found');
       }
 
       if (dto.supportingDocuments) {
-        const existingDocs = existingRequest.SupportingDocument;
+        const existingDocs = existingRequest.supportingDocuments;
         const existingDocIds = new Set(existingDocs.map((doc) => doc.id));
         const updatedDocIds = new Set(
-          dto.supportingDocuments.map((doc) => doc.id).filter(Boolean),
+          dto.supportingDocuments?.map((doc) => doc.id).filter(Boolean),
         );
 
         // Delete documents that are not in the updated list
@@ -316,9 +321,10 @@ export class GuardianService {
           orphans: dto.orphans
             ? { set: dto.orphans.map((orphanId) => ({ id: orphanId })) }
             : undefined,
+          status: status,
         },
         include: {
-          SupportingDocument: true,
+          supportingDocuments: true,
         },
       });
     });
@@ -354,7 +360,7 @@ export class GuardianService {
         throw new NotFoundException('Request not found');
       }
 
-      if (request.status !== SponsorshipStatus.DRAFT) {
+      if (request.status !== Status.draft) {
         throw new NotFoundException('Request is not in draft status');
       }
 
@@ -392,16 +398,16 @@ export class GuardianService {
       const updatedRequest = await prisma.sponsorshipRequest.update({
         where: { id: requestId },
         data: {
-          status: SponsorshipStatus.PUBLISHED,
+          status: Status.published,
           updatedByUserId: userId,
         },
       });
 
       await prisma.actionLog.create({
         data: {
-          actionType: ActionType.PUBLISH_SPONSORSHIP_REQUEST,
+          action: Action.publish,
           fromStatus: existingRequest.status,
-          toStatus: SponsorshipStatus.PUBLISHED,
+          toStatus: Status.published,
           sponsorshipRequestId: requestId,
           createdByUserId: userId,
         },
@@ -428,16 +434,16 @@ export class GuardianService {
       const updatedRequest = await prisma.sponsorshipRequest.update({
         where: { id: requestId },
         data: {
-          status: SponsorshipStatus.PENDING,
+          status: Status.pending,
           updatedByUserId: userId,
         },
       });
 
       await prisma.actionLog.create({
         data: {
-          actionType: ActionType.SUBMIT_SPONSORSHIP_REQUEST,
+          action: Action.request_approval,
           fromStatus: existingRequest.status,
-          toStatus: SponsorshipStatus.PENDING,
+          toStatus: Status.approval_requested,
           sponsorshipRequestId: requestId,
           createdByUserId: userId,
         },
@@ -464,16 +470,16 @@ export class GuardianService {
       const updatedRequest = await prisma.sponsorshipRequest.update({
         where: { id: requestId },
         data: {
-          status: SponsorshipStatus.APPROVED,
+          status: Status.approved,
           updatedByUserId: userId,
         },
       });
 
       await prisma.actionLog.create({
         data: {
-          actionType: ActionType.APPROVE_SPONSORSHIP_REQUEST,
+          action: Action.approve,
           fromStatus: existingRequest.status,
-          toStatus: SponsorshipStatus.APPROVED,
+          toStatus: Status.approved,
           sponsorshipRequestId: requestId,
           createdByUserId: userId,
         },
@@ -501,18 +507,18 @@ export class GuardianService {
       const updatedRequest = await prisma.sponsorshipRequest.update({
         where: { id: requestId },
         data: {
-          status: SponsorshipStatus.REJECTED,
+          status: Status.rejected,
           updatedByUserId: userId,
         },
       });
 
       await prisma.actionLog.create({
         data: {
-          actionType: ActionType.REJECT_SPONSORSHIP_REQUEST,
+          action: Action.request_approval,
           fromStatus: existingRequest.status,
-          toStatus: SponsorshipStatus.REJECTED,
+          toStatus: Status.rejected,
           sponsorshipRequestId: requestId,
-          reason: rejectionReason,
+          comment: rejectionReason,
           createdByUserId: userId,
         },
       });
@@ -539,17 +545,17 @@ export class GuardianService {
       const updatedRequest = await prisma.sponsorshipRequest.update({
         where: { id: requestId },
         data: {
-          status: SponsorshipStatus.CLOSED,
+          status: Status.closed,
           updatedByUserId: userId,
         },
       });
 
       await prisma.actionLog.create({
         data: {
-          actionType: ActionType.CLOSE_SPONSORSHIP_REQUEST,
+          action: Action.close,
           fromStatus: existingRequest.status,
-          toStatus: SponsorshipStatus.CLOSED,
-          reason: closeReason,
+          toStatus: Status.closed,
+          comment: closeReason,
           sponsorshipRequestId: requestId,
           createdByUserId: userId,
         },
@@ -559,8 +565,21 @@ export class GuardianService {
     });
   }
 
-  async getAllSponsorshipRequests() {
-    return await this.prisma.sponsorshipRequest.findMany();
+  async getAllSponsorshipRequests(status: Status) {
+    return await this.prisma.sponsorshipRequest.findMany({
+      where: {
+        status: status,
+      },
+      include: {
+        orphans: true,
+        supportingDocuments: true,
+        actionLogs: {
+          orderBy: {
+            updatedAt: 'desc',
+          },
+        },
+      },
+    });
   }
 
   async getMySponsorshipRequests(userId: string) {
@@ -580,16 +599,8 @@ export class GuardianService {
             },
           },
         },
-        SupportingDocument: true,
-        EditRequest: {
-          include: {
-            ActionLog: true,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-        ActionLog: {
+        supportingDocuments: true,
+        actionLogs: {
           orderBy: {
             updatedAt: 'desc',
           },
@@ -607,8 +618,8 @@ export class GuardianService {
       include: {
         orphans: true,
         createdBy: true,
-        SupportingDocument: true,
-        ActionLog: true,
+        supportingDocuments: true,
+        actionLogs: true,
       },
     });
   }
@@ -623,200 +634,5 @@ export class GuardianService {
         id: attachmentId,
       },
     });
-  }
-
-  async requestSponsorshipRequestEdit(
-    sponsorshipRequestId: string,
-    dto: RequestSponsorshipRequestEditDto,
-    userId: string,
-  ) {
-    const sponsorshipRequest = await this.prisma.sponsorshipRequest.update({
-      where: {
-        id: sponsorshipRequestId,
-      },
-      data: {
-        editRequested: true,
-      },
-      select: {
-        title: true,
-        description: true,
-        targetAmount: true,
-        deadline: true,
-        SupportingDocument: true,
-        status: true,
-      },
-    });
-
-    const requestOrphans = await this.prisma.sponsorshipRequest.findUnique({
-      where: {
-        id: sponsorshipRequestId,
-      },
-      include: {
-        orphans: true,
-      },
-    });
-
-    const orphanIds = requestOrphans.orphans.map((orphan) => orphan.id);
-
-    return await this.prisma.editRequest.create({
-      data: {
-        sponsorshipRequestId: sponsorshipRequestId,
-        current: { ...sponsorshipRequest, orphans: orphanIds },
-        edit: JSON.parse(JSON.stringify(dto.edit)),
-        status: Status.pending,
-        reason: dto.reason,
-        createdByUserId: userId,
-      },
-    });
-  }
-
-  async getSponsorshipRequestEditRequests() {
-    const editRequests = await this.prisma.editRequest.findMany();
-    return editRequests;
-  }
-
-  async approveSponsorshipRequestEdit(editRequestId: string) {
-    const editRequest = await this.prisma.editRequest.findUnique({
-      where: {
-        id: editRequestId,
-      },
-    });
-
-    await this.prisma.editRequest.update({
-      where: {
-        id: editRequestId,
-      },
-      data: {
-        status: Status.approved,
-      },
-    });
-
-    const sponsorshipRequestId = editRequest.sponsorshipRequestId;
-
-    await this.prisma.sponsorshipRequest.update({
-      where: {
-        id: sponsorshipRequestId,
-      },
-      data: {
-        editRequested: false,
-      },
-    });
-
-    return await this.updateRequest(
-      sponsorshipRequestId,
-      editRequest.edit as UpdateSponsorshipRequestDto,
-    );
-  }
-
-  async rejectSponsorshipRequestEdit(
-    editRequestId: string,
-    userId: string,
-    reason: string,
-  ) {
-    const editRequest = await this.prisma.editRequest.findUnique({
-      where: {
-        id: editRequestId,
-      },
-    });
-
-    await this.prisma.actionLog.create({
-      data: {
-        actionType: ActionType.REJECT_EDIT_REQUEST,
-        fromStatus: editRequest.status,
-        toStatus: Status.rejected,
-        reason: reason,
-        editRequestId: editRequest.id,
-        createdByUserId: userId,
-      },
-    });
-
-    await this.prisma.sponsorshipRequest.update({
-      where: {
-        id: editRequest.sponsorshipRequestId,
-      },
-      data: {
-        editRequested: false,
-      },
-    });
-
-    return await this.prisma.editRequest.update({
-      where: {
-        id: editRequestId,
-      },
-      data: {
-        status: Status.rejected,
-      },
-    });
-  }
-
-  async requestSponsorshipRequestPublish(
-    sponsorshipRequestId: string,
-    userId: string,
-    reason: string,
-  ) {
-    return await this.prisma.publishRequest.create({
-      data: {
-        reason: reason,
-        sponsorshipRequestId: sponsorshipRequestId,
-        createdByUserId: userId,
-      },
-    });
-  }
-
-  async getPublishRequests() {
-    return await this.prisma.publishRequest.findMany();
-  }
-
-  async approvePublishRequest(publishRequestId: string, userId: string) {
-    const publishRequest = await this.prisma.publishRequest.update({
-      where: {
-        id: publishRequestId,
-      },
-      data: {
-        status: Status.approved,
-        updatedByUserId: userId,
-      },
-    });
-
-    await this.prisma.actionLog.create({
-      data: {
-        publishRequestId: publishRequestId,
-        fromStatus: Status.pending,
-        toStatus: Status.approved,
-        actionType: ActionType.APPROVE_PUBLISH_REQUEST,
-        createdByUserId: userId,
-      },
-    });
-
-    return publishRequest;
-  }
-
-  async rejectPublishRequest(
-    publishRequestId: string,
-    userId: string,
-    reason: string,
-  ) {
-    const publishRequest = this.prisma.publishRequest.update({
-      where: {
-        id: publishRequestId,
-      },
-      data: {
-        status: Status.rejected,
-        updatedByUserId: userId,
-      },
-    });
-
-    await this.prisma.actionLog.create({
-      data: {
-        publishRequestId: publishRequestId,
-        fromStatus: Status.pending,
-        toStatus: Status.rejected,
-        actionType: ActionType.REJECT_PUBSLISH_REQUEST,
-        reason: reason,
-        createdByUserId: userId,
-      },
-    });
-
-    return publishRequest;
   }
 }

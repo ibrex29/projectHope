@@ -1,9 +1,9 @@
-import { 
-  IsArray, 
-  IsNotEmpty, 
-  IsNumber, 
-  IsOptional, 
-  IsString 
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -31,7 +31,7 @@ export class CreateRequestDto {
   })
   @IsNotEmpty()
   @IsString()
-  type: string; 
+  type: string;
 
   @ApiProperty({
     description: 'Array of URLs for supporting pictures.',
@@ -41,7 +41,7 @@ export class CreateRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  supportingPictures?: string[]; 
+  supportingPictures?: string[];
 
   @ApiProperty({
     description: 'Array of URLs for supporting documents.',
@@ -51,7 +51,7 @@ export class CreateRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  supportingDocuments?: string[]; 
+  supportingDocuments?: string[];
 
   @ApiProperty({
     description: 'ID of the associated need.',
@@ -59,7 +59,7 @@ export class CreateRequestDto {
   })
   @IsNotEmpty()
   @IsString()
-  needId: string; 
+  needId: string;
 
   @ApiProperty({
     description: 'Array of IDs of orphans associated with the request.',
@@ -68,7 +68,7 @@ export class CreateRequestDto {
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  orphanIds: string[]; 
+  orphanIds: string[];
 
   @ApiProperty({
     description: 'Amount of financial support needed.',

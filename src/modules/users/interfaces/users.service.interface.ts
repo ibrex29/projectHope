@@ -1,5 +1,8 @@
-import { CreateUserParams, CreateUserProfileParams, UpdateUserParams } from "../types";
-
+import {
+  CreateUserParams,
+  CreateUserProfileParams,
+  UpdateUserParams,
+} from '../types';
 
 export interface UsersServiceInterface {
   findUsers(): Promise<any[]>;
