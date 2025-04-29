@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import { join } from 'path';
 import { PrismaModule } from 'prisma/prisma.module';
+import { ActionModule } from './action/action.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheConfigModule } from './cache.module';
@@ -19,9 +20,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { GuardianModule } from './modules/guardian/guardian.module';
 import { OrphanModule } from './modules/orphan/orphan.module';
 import { SponsorModule } from './modules/sponsor/sponsor.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UsersModule } from './modules/users/users.module';
 import { UploadModule } from './upload/upload.module';
-import { ActionModule } from './action/action.module';
 
 console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
 @Module({
@@ -63,6 +64,7 @@ console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
     SponsorModule,
     UploadModule,
     ActionModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

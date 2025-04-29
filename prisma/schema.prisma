@@ -44,6 +44,7 @@ model User {
   roles                     Role[]               @relation("UserRoles")
 
   @@map("users")
+  Transaction Transaction[]
 }
 
 model Profile {
@@ -221,6 +222,7 @@ model SponsorshipRequest {
   orphans             Orphan[]             @relation("SponsorshipRequestOrphans")
 
   @@map("sponsorship_requests")
+  Transaction Transaction[]
 }
 
 model ActionLog {
@@ -366,4 +368,24 @@ enum Action {
   request_reopen_publish
   approve_reopen_publish
   reject_reopen_publish
+}
+
+enum PaymentStatus {
+  notPaid
+  paid
+  pending
+  failed
+}
+
+model Transaction {
+  id                    String @id @default(uuid())
+  transactionReference  String? @unique
+  paymentLink           String?
+  transactionStatus     String?
+  status                PaymentStatus       @default(notPaid)
+
+  sponsorshipRequestId  String
+  sponsorshipRequest    SponsorshipRequest  @relation(fields: [sponsorshipRequestId], references: [id])
+  userId                String
+  user                  User                @relation(fields: [userId], references: [id])
 }
