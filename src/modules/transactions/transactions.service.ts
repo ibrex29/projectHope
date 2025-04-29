@@ -52,7 +52,6 @@ export class TransactionsService {
     });
 
     if (!user || !user.email || !user.profile) return null;
-
     const metadata: PaystackMetadata = {
       user_id: userId,
       product_id: sponsorshipRequest.id,
@@ -114,32 +113,29 @@ export class TransactionsService {
       },
     });
   }
-
+  
   async verifyTransaction(dto: PaystackCallbackDto) {
     if (!dto.reference) {
       throw new BadRequestException('Transaction reference is required.');
     }
-
+  
     const transaction = await this.prisma.transaction.findUnique({
       where: { transactionReference: dto.reference },
     });
-
+  
     if (!transaction) return null;
-
+  
     const url = `${PAYSTACK_TRANSACTION_VERIFY_BASE_URL}/${dto.reference}`;
-
+  
     let transactionStatus: string;
-
+  
     try {
-      const response = await axios.get<PaystackVerifyTransactionResponseDto>(
-        url,
-        {
-          headers: {
-            Authorization: `Bearer ${this.configService.get<string>('PAYSTACK_SECRET_KEY')}`,
-          },
+      const response = await axios.get<PaystackVerifyTransactionResponseDto>(url, {
+        headers: {
+          Authorization: `Bearer ${this.configService.get<string>('PAYSTACK_SECRET_KEY')}`,
         },
-      );
-
+      });
+  
       transactionStatus = response.data.data.status;
     } catch (error) {
       console.error('Transaction verification failed:', error);
@@ -152,17 +148,12 @@ export class TransactionsService {
       where: { transactionReference: dto.reference },
       data: {
         transactionStatus,
-        status: {
-          set: paymentConfirmed ? PaymentStatus.paid : PaymentStatus.notPaid,
-        },
+        status: { set: paymentConfirmed ? PaymentStatus.paid : PaymentStatus.notPaid },
       },
     });
   }
 
-  async handlePaystackWebhook(
-    dto: PaystackWebhookDto,
-    signature: string,
-  ): Promise<boolean> {
+  async handlePaystackWebhook(dto: PaystackWebhookDto, signature: string): Promise<boolean> {
     if (!dto.data) return false;
 
     let isValidEvent = false;
@@ -175,9 +166,7 @@ export class TransactionsService {
         .update(JSON.stringify(dto))
         .digest('hex');
 
-      isValidEvent =
-        hash &&
-        signature &&
+      isValidEvent = hash && signature &&
         timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
     } catch (error) {
       return false;
