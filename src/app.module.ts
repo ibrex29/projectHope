@@ -4,7 +4,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import { join } from 'path';
-import { PrismaModule } from 'prisma/prisma.module';
 import { ActionModule } from './action/action.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -15,7 +14,6 @@ import {
   THROTTLE_LIMIT,
   THROTTLE_TTL,
 } from './common/constants';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GuardianModule } from './modules/guardian/guardian.module';
 import { OrphanModule } from './modules/orphan/orphan.module';
@@ -23,7 +21,6 @@ import { SponsorModule } from './modules/sponsor/sponsor.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UsersModule } from './modules/users/users.module';
 import { UploadModule } from './upload/upload.module';
-import { TransactionsModule } from './modules/transactions/transactions.module';
 
 console.log('Serving static files from:', join(__dirname, '..', 'uploads'));
 @Module({

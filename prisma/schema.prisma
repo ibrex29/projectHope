@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://root:password@localhost:5435/hopedb?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -42,9 +42,9 @@ model User {
   createdIdentities         Identity[]           @relation("identity_created_by")
   updatedIdentities         Identity[]           @relation("identity_updated_by")
   roles                     Role[]               @relation("UserRoles")
+  Transaction               Transaction[]
 
   @@map("users")
-  Transaction Transaction[]
 }
 
 model Profile {
@@ -220,9 +220,9 @@ model SponsorshipRequest {
   supportingDocuments SupportingDocument[]
   donations           Donation[]           @relation("SponsorshipRequestDonations")
   orphans             Orphan[]             @relation("SponsorshipRequestOrphans")
+  Transaction         Transaction[]
 
   @@map("sponsorship_requests")
-  Transaction Transaction[]
 }
 
 model ActionLog {
@@ -378,14 +378,14 @@ enum PaymentStatus {
 }
 
 model Transaction {
-  id                    String @id @default(uuid())
-  transactionReference  String? @unique
-  paymentLink           String?
-  transactionStatus     String?
-  status                PaymentStatus       @default(notPaid)
+  id                   String        @id @default(uuid())
+  transactionReference String?       @unique
+  paymentLink          String?
+  transactionStatus    String?
+  status               PaymentStatus @default(notPaid)
 
-  sponsorshipRequestId  String
-  sponsorshipRequest    SponsorshipRequest  @relation(fields: [sponsorshipRequestId], references: [id])
-  userId                String
-  user                  User                @relation(fields: [userId], references: [id])
+  sponsorshipRequestId String
+  sponsorshipRequest   SponsorshipRequest @relation(fields: [sponsorshipRequestId], references: [id])
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id])
 }
