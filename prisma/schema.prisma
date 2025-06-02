@@ -48,27 +48,27 @@ model User {
 }
 
 model Profile {
-  id                String           @id @default(uuid())
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  firstName         String?
-  middleName        String?
-  lastName          String?
-  gender            String?
-  localGovernmentId String?
-  dateOfBirth       DateTime?
-  homeAddress       String?
-  maritalStatus     String?
-  phoneNumber       String?
-  picture           String?
-  userId            String           @unique
-  createdByUserId   String?
-  updatedByUserId   String?
-  createdBy         User?            @relation("profile_created_by", fields: [createdByUserId], references: [id])
-  localGovernment   LocalGovernment? @relation(fields: [localGovernmentId], references: [id])
-  updatedBy         User?            @relation("profile_updated_by", fields: [updatedByUserId], references: [id])
-  user              User             @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
-  identities        Identity[]
+  id              String     @id @default(uuid())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  firstName       String?
+  middleName      String?
+  lastName        String?
+  gender          String?
+  stateOfOrigin   String?
+  localGovernment String?
+  dateOfBirth     DateTime?
+  homeAddress     String?
+  maritalStatus   String?
+  phoneNumber     String?
+  picture         String?
+  userId          String     @unique
+  createdByUserId String?
+  updatedByUserId String?
+  createdBy       User?      @relation("profile_created_by", fields: [createdByUserId], references: [id])
+  updatedBy       User?      @relation("profile_updated_by", fields: [updatedByUserId], references: [id])
+  user            User       @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
+  identities      Identity[]
 
   @@map("profiles")
 }
@@ -118,24 +118,6 @@ model Identity {
 
   @@id([name, number], name: "identityId")
   @@map("user_identity")
-}
-
-model State {
-  id               String            @id @default(uuid())
-  name             String            @unique
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  localGovernments LocalGovernment[] @relation("StateToLocalGovernment")
-}
-
-model LocalGovernment {
-  id        String    @id @default(uuid())
-  name      String
-  stateId   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  state     State     @relation("StateToLocalGovernment", fields: [stateId], references: [id])
-  profile   Profile[]
 }
 
 model EmploymentDetails {

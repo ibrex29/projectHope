@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { Profile, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -84,15 +80,6 @@ export class UsersService {
     createProfileDto: CreateProfileDto,
     userId: string,
   ) {
-    // Find the local government by name to get its ID
-    const localGovernment = await this.prisma.localGovernment.findFirst({
-      where: { name: createProfileDto.localGovernment },
-    });
-
-    if (!localGovernment) {
-      throw new ConflictException('Local government not found');
-    }
-
     // Upsert employment details
     const employmentDetails = await this.prisma.employmentDetails.upsert({
       where: { userId: userId },
@@ -121,9 +108,8 @@ export class UsersService {
     const profile = await this.prisma.profile.upsert({
       where: { userId: userId },
       update: {
-        localGovernment: {
-          connect: { id: localGovernment.id },
-        },
+        stateOfOrigin: createProfileDto.stateOfOrigin,
+        localGovernment: createProfileDto.localGovernment,
         dateOfBirth: createProfileDto.dateOfBirth,
         homeAddress: createProfileDto.homeAddress,
         maritalStatus: createProfileDto.maritalStatus,
@@ -131,9 +117,8 @@ export class UsersService {
         picture: createProfileDto.picture,
       },
       create: {
-        localGovernment: {
-          connect: { id: localGovernment.id },
-        },
+        stateOfOrigin: createProfileDto.stateOfOrigin,
+        localGovernment: createProfileDto.localGovernment,
         dateOfBirth: createProfileDto.dateOfBirth,
         homeAddress: createProfileDto.homeAddress,
         maritalStatus: createProfileDto.maritalStatus,

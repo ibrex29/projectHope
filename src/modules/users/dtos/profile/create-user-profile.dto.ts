@@ -32,8 +32,16 @@ export class CreateProfileDto {
   lastName?: string;
 
   @ApiProperty({
-    description: 'Local government name.',
-    example: 'Hadejia',
+    description: 'State of Origin',
+    example: 'Kaduna',
+  })
+  @IsString()
+  @IsOptional()
+  stateOfOrigin: string;
+
+  @ApiProperty({
+    description: 'Local Government Area',
+    example: 'Zaria',
   })
   @IsString()
   @IsOptional()
