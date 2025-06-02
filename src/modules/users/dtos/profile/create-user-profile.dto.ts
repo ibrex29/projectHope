@@ -1,10 +1,10 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDateString,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProfileDto {
   @ApiProperty({
@@ -84,7 +84,7 @@ export class CreateProfileDto {
     example: 'employed',
   })
   @IsNotEmpty()
-  employementStatus: string;
+  employmentStatus: string;
 
   @ApiProperty({
     description: 'Nature of the job.',

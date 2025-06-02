@@ -97,7 +97,7 @@ export class UsersService {
     const employmentDetails = await this.prisma.employmentDetails.upsert({
       where: { userId: userId },
       update: {
-        employmentStatus: createProfileDto.employementStatus,
+        employmentStatus: createProfileDto.employmentStatus,
         natureOfJob: createProfileDto.natureOfJob,
         annualIncome: createProfileDto.annualIncome,
         employerName: createProfileDto.employerName,
@@ -105,7 +105,7 @@ export class UsersService {
         employerAddress: createProfileDto.employerAddress,
       },
       create: {
-        employmentStatus: createProfileDto.employementStatus,
+        employmentStatus: createProfileDto.employmentStatus,
         natureOfJob: createProfileDto.natureOfJob,
         annualIncome: createProfileDto.annualIncome,
         employerName: createProfileDto.employerName,
