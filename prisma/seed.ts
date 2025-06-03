@@ -1,18 +1,27 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt'; //import bcrypt from 'bcrypt' does not work. That is why the asterisk import is used.
 
 const prisma = new PrismaClient();
+
+const saltRounds = 10;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, saltRounds);
+}
 
 async function main() {
   // Seed Roles
   const roles = [
     {
       roleName: 'admin',
-      description: 'Has full access to all resources and can manage other users.',
+      description:
+        'Has full access to all resources and can manage other users.',
       isActive: true,
     },
     {
       roleName: 'guardian',
-      description: 'Responsible for managing orphans and monitoring their activities.',
+      description:
+        'Responsible for managing orphans and monitoring their activities.',
       isActive: true,
     },
     {
@@ -27,7 +36,8 @@ async function main() {
     },
     {
       roleName: 'Support',
-      description: 'The Support Department assists users with issues, questions, or requests.',
+      description:
+        'The Support Department assists users with issues, questions, or requests.',
       isActive: true,
     },
   ];
@@ -40,35 +50,25 @@ async function main() {
 
   console.log('Roles seeded successfully');
 
-  const adminUser = await prisma.user.create({
+  // Seed Admin User
+  const hashedPassword = await hashPassword('securepassword');
+
+  // Create sample users (adjust as needed)
+  await prisma.user.create({
     data: {
       email: 'admin@example.com',
-      password: 'password',
+      password: hashedPassword, // Use hashed password
       isActive: true,
       authStrategy: 'local',
-    },
-  });
-
-  console.log('Admin user seeded successfully');
-
-  // Seed the state and local governments
-  const jigawaState = await prisma.state.create({
-    data: {
-      name: 'Jigawa',
-      localGovernments: {
-        create: [
-          { name: 'Hadejia' },
-          { name: 'Dutse' },
-          { name: 'Kazaure' },
-          { name: 'Gwaram' },
-          { name: 'Ringim' },
-          // Add other local governments here
-        ],
+      roles: {
+        connect: {
+          roleName: 'admin',
+        },
       },
     },
   });
 
-  console.log('Seeded state with local governments:', jigawaState);
+  console.log('Admin user seeded successfully');
 }
 
 main()
