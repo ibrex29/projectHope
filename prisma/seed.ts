@@ -65,6 +65,12 @@ async function main() {
           roleName: 'admin',
         },
       },
+      profile: {
+        create: {
+          firstName: 'Super',
+          lastName: 'Admin',
+        },
+      },
     },
   });
 
