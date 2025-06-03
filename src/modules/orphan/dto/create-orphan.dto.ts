@@ -2,13 +2,11 @@
 
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsOptional,
   IsBoolean,
   IsDateString,
   IsNotEmpty,
-  IsUUID,
-  IsDate,
+  IsOptional,
+  IsString,
 } from 'class-validator';
 
 export class CreateOrphanDto {
@@ -61,12 +59,20 @@ export class CreateOrphanDto {
   affidavitOfGuardianship: string;
 
   @ApiProperty({
-    description: 'Local government ID for the orphan.',
-    example: 'Hadejia',
+    description: 'State of Origin',
+    example: 'Kaduna',
   })
-  @IsUUID()
+  @IsString()
   @IsOptional()
-  localGovernment?: string;
+  stateOfOrigin: string;
+
+  @ApiProperty({
+    description: 'Local Government Area',
+    example: 'Zaria',
+  })
+  @IsString()
+  @IsOptional()
+  localGovernment: string;
 
   @ApiProperty({
     description: 'Date of birth of the orphan.',

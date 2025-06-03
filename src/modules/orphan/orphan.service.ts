@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Action, Orphan, Status } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { RoleNotFoundException } from '../users/exceptions/RoleNotFound.exception';
@@ -14,19 +10,14 @@ import { UpdateOrphanDto } from './dto/update-orphan.dto';
 export class OrphanService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createProfile(
-    createOrphanDto: CreateOrphanDto,
-    userId: string,
-    localGovernmentId: string,
-  ) {
+  async createProfile(createOrphanDto: CreateOrphanDto, userId: string) {
     return this.prisma.profile.create({
       data: {
         firstName: createOrphanDto.firstName,
         middleName: createOrphanDto.middleName,
         lastName: createOrphanDto.lastName,
-        localGovernment: {
-          connect: { id: localGovernmentId },
-        },
+        stateOfOrigin: createOrphanDto.stateOfOrigin,
+        localGovernment: createOrphanDto.localGovernment,
         dateOfBirth: createOrphanDto.dateOfBirth,
         phoneNumber: createOrphanDto.schoolContactPhone,
         gender: createOrphanDto.gender,
@@ -44,12 +35,6 @@ export class OrphanService {
     const role = await this.prisma.role.findUnique({ where: { roleName } });
     if (!role) throw new RoleNotFoundException(`Role '${roleName}' not found`);
 
-    const localGovernment = await this.prisma.localGovernment.findFirst({
-      where: { name: createOrphanDto.localGovernment },
-    });
-    if (!localGovernment)
-      throw new ConflictException('Local government not found');
-
     const createdUser = await this.prisma.user.create({
       data: {
         email: null,
@@ -65,11 +50,7 @@ export class OrphanService {
       },
     });
 
-    const profile = await this.createProfile(
-      createOrphanDto,
-      createdUser.id,
-      localGovernment.id,
-    );
+    const profile = await this.createProfile(createOrphanDto, createdUser.id);
 
     const orphan = await this.prisma.orphan.create({
       data: {
@@ -88,20 +69,15 @@ export class OrphanService {
     return { orphan, createdUser, profile };
   }
 
-  async updateProfile(
-    updateOrphanDto: UpdateOrphanDto,
-    userId: string,
-    localGovernmentId: string,
-  ) {
+  async updateProfile(updateOrphanDto: UpdateOrphanDto, userId: string) {
     return this.prisma.profile.update({
       where: { userId },
       data: {
         firstName: updateOrphanDto.firstName ?? undefined,
         middleName: updateOrphanDto.middleName ?? undefined,
         lastName: updateOrphanDto.lastName ?? undefined,
-        localGovernment: {
-          connect: { id: localGovernmentId },
-        },
+        stateOfOrigin: updateOrphanDto.stateOfOrigin ?? undefined,
+        localGovernment: updateOrphanDto.localGovernment ?? undefined,
         dateOfBirth: updateOrphanDto.dateOfBirth ?? undefined,
         phoneNumber: updateOrphanDto.schoolContactPhone ?? undefined,
         gender: updateOrphanDto.gender ?? undefined,
@@ -124,16 +100,7 @@ export class OrphanService {
       throw new NotFoundException('Orphan account not found');
     }
 
-    // Step 2: Fetch the associated local government
-    const localGovernment = await this.prisma.localGovernment.findFirst({
-      where: { name: updateOrphanDto.localGovernment },
-    });
-
-    if (!localGovernment) {
-      throw new ConflictException('Local government not found');
-    }
-
-    // Step 3: Check if the orphan has an associated user profile
+    // Step 2: Check if the orphan has an associated user profile
     const user = await this.prisma.user.findUnique({
       where: { id: orphan.userId },
     });
@@ -146,7 +113,6 @@ export class OrphanService {
     const updatedProfile = await this.updateProfile(
       updateOrphanDto,
       orphan.userId,
-      localGovernment.id,
     );
 
     // Step 5: Update orphan details
@@ -225,15 +191,7 @@ export class OrphanService {
           updatedBy: true,
           user: {
             include: {
-              profile: {
-                include: {
-                  localGovernment: {
-                    include: {
-                      state: true,
-                    },
-                  },
-                },
-              },
+              profile: true,
             },
           },
           actionLogs: true,
